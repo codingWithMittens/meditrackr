@@ -7,10 +7,12 @@ import PrintView from './components/PrintView/PrintView.jsx';
 import TimePeriodSettings from './components/Settings/TimePeriodSettings.jsx';
 import { useMedications } from './hooks/useMedications.js';
 import { useTimePeriods } from './hooks/useTimePeriods.js';
+import { useDailyLogs } from './hooks/useDailyLogs.js';
 
 function App() {
   const { medications, addMedication, updateMedication, deleteMedication, toggleTaken } = useMedications();
   const { timePeriods, updateTimePeriod, addTimePeriod, deleteTimePeriod } = useTimePeriods();
+  const { updateDailyLog, getDailyLog } = useDailyLogs();
 
   const [currentView, setCurrentView] = useState('calendar');
   const [showForm, setShowForm] = useState(false);
@@ -70,6 +72,8 @@ function App() {
             timePeriods={timePeriods}
             toggleTaken={toggleTaken}
             onAddNew={handleAddNew}
+            updateDailyLog={updateDailyLog}
+            getDailyLog={getDailyLog}
           />
         )}
 

@@ -14,7 +14,10 @@ const MedicationForm = ({ editingMed, timePeriods, onSave, onCancel }) => {
     times: [{ label: 'Morning', time: '08:00', isCustom: false }],
     startDate: new Date().toISOString().split('T')[0],
     endDate: '',
-    notes: ''
+    notes: '',
+    indication: '',
+    provider: '',
+    type: 'rx'
   });
   const [formErrors, setFormErrors] = useState({});
 
@@ -29,7 +32,10 @@ const MedicationForm = ({ editingMed, timePeriods, onSave, onCancel }) => {
         times: editingMed.times,
         startDate: editingMed.startDate,
         endDate: editingMed.endDate || '',
-        notes: editingMed.notes || ''
+        notes: editingMed.notes || '',
+        indication: editingMed.indication || '',
+        provider: editingMed.provider || '',
+        type: editingMed.type || 'rx'
       });
     }
   }, [editingMed]);

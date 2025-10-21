@@ -12,7 +12,8 @@ const CalendarDay = ({
   hoveredCard,
   setHoveredCard,
   onClick,
-  onAddNew
+  onAddNew,
+  isCurrentMonth = true
 }) => {
   const groupedByTime = groupSchedulesByTime(schedulesForDay);
   const timeGroups = Object.values(groupedByTime).sort((a, b) => a.time.localeCompare(b.time));
@@ -27,7 +28,9 @@ const CalendarDay = ({
     <div
       className={`min-h-24 p-2 border rounded relative ${
         isToday ? 'bg-blue-50 border-blue-300' : 'border-gray-200'
-      } ${hasSchedules ? 'hover:bg-gray-50 cursor-pointer' : ''}`}
+      } ${hasSchedules ? 'hover:bg-gray-50 cursor-pointer' : ''} ${
+        !isCurrentMonth ? 'opacity-40' : ''
+      }`}
       onClick={onClick}
     >
       {allDayTaken && (

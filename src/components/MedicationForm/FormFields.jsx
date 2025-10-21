@@ -5,8 +5,20 @@ import { COMMON_MEDICATIONS } from '../../constants/medications';
 const FormFields = ({ formData, formErrors, onChange, onUpdateFormData }) => {
   const [nameSuggestions, setNameSuggestions] = useState([]);
   const [genericSuggestions, setGenericSuggestions] = useState([]);
+  const [providerSuggestions, setProviderSuggestions] = useState([]);
   const [showNameDropdown, setShowNameDropdown] = useState(false);
   const [showGenericDropdown, setShowGenericDropdown] = useState(false);
+  const [showProviderDropdown, setShowProviderDropdown] = useState(false);
+
+  // Get unique providers from localStorage
+  const getStoredProviders = () => {
+    const medications = JSON.parse(localStorage.getItem('medications') || '[]');
+    const providers = medications
+      .map(med => med.provider)
+      .filter(provider => provider && provider.trim() !== '')
+      .filter((provider, index, self) => self.indexOf(provider) === index);
+    return providers;
+  };
 
   const handleNameChange = (e) => {
     const value = e.target.value;
@@ -46,6 +58,27 @@ const FormFields = ({ formData, formErrors, onChange, onUpdateFormData }) => {
   const selectGenericName = (med) => {
     onUpdateFormData(prev => ({ ...prev, genericName: med.generic, name: med.brand }));
     setShowGenericDropdown(false);
+  };
+
+  const handleProviderChange = (e) => {
+    const value = e.target.value;
+    onChange(e);
+
+    if (value.length > 0) {
+      const storedProviders = getStoredProviders();
+      const filtered = storedProviders.filter(provider =>
+        provider.toLowerCase().includes(value.toLowerCase())
+      );
+      setProviderSuggestions(filtered);
+      setShowProviderDropdown(true);
+    } else {
+      setShowProviderDropdown(false);
+    }
+  };
+
+  const selectProvider = (provider) => {
+    onUpdateFormData(prev => ({ ...prev, provider }));
+    setShowProviderDropdown(false);
   };
 
   return (
@@ -148,6 +181,74 @@ const FormFields = ({ formData, formErrors, onChange, onUpdateFormData }) => {
           <option value="weekly">Weekly</option>
           <option value="as-needed">As Needed</option>
         </select>
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium mb-1">Indication (Optional)</label>
+        <input
+          type="text"
+          name="indication"
+          value={formData.indication || ''}
+          onChange={onChange}
+          className="w-full p-2 border rounded"
+          placeholder="e.g., High blood pressure"
+        />
+      </div>
+
+      <div className="relative">
+        <label className="block text-sm font-medium mb-1">Provider (Optional)</label>
+        <input
+          type="text"
+          name="provider"
+          value={formData.provider || ''}
+          onChange={handleProviderChange}
+          onFocus={() => formData.provider && setShowProviderDropdown(true)}
+          onBlur={() => setTimeout(() => setShowProviderDropdown(false), 200)}
+          className="w-full p-2 border rounded"
+          placeholder="e.g., Dr. Smith"
+          autoComplete="off"
+        />
+        {showProviderDropdown && providerSuggestions.length > 0 && (
+          <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-40 overflow-y-auto">
+            {providerSuggestions.map((provider, idx) => (
+              <div
+                key={idx}
+                onClick={() => selectProvider(provider)}
+                className="px-4 py-2 hover:bg-blue-50 cursor-pointer border-b border-gray-100 last:border-b-0"
+              >
+                {provider}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium mb-2">Type</label>
+        <div className="flex gap-4">
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="radio"
+              name="type"
+              value="rx"
+              checked={formData.type === 'rx'}
+              onChange={onChange}
+              className="w-4 h-4 text-blue-600"
+            />
+            <span className="text-gray-700">Prescription (Rx)</span>
+          </label>
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="radio"
+              name="type"
+              value="otc"
+              checked={formData.type === 'otc'}
+              onChange={onChange}
+              className="w-4 h-4 text-blue-600"
+            />
+            <span className="text-gray-700">Over the Counter (OTC)</span>
+          </label>
+        </div>
       </div>
     </div>
   );

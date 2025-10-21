@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Calendar as CalendarIcon, Plus } from 'lucide-react';
 import { getDaysInMonth, formatDate } from '../../utils/dateHelpers';
 import { getSchedulesForDate } from '../../utils/scheduleHelpers';
@@ -6,13 +6,49 @@ import { DAYS_OF_WEEK_SHORT } from '../../constants/medications';
 import CalendarDay from './CalendarDay';
 import DayModal from './DayModal';
 
-const Calendar = ({ medications, timePeriods, toggleTaken, onAddNew }) => {
+const Calendar = ({ medications, timePeriods, toggleTaken, onAddNew, updateDailyLog, getDailyLog }) => {
+  // Detect if mobile on mount
+  const isMobile = () => window.innerWidth < 768;
+  const [viewMode, setViewMode] = useState(isMobile() ? 'weekly' : 'monthly');
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [selectedDayModal, setSelectedDayModal] = useState(null);
   const [hoveredCard, setHoveredCard] = useState(null);
 
   const changeMonth = (offset) => {
     setSelectedDate(new Date(selectedDate.getFullYear(), selectedDate.getMonth() + offset, 1));
+  };
+
+  const changeWeek = (offset) => {
+    const newDate = new Date(selectedDate);
+    newDate.setDate(selectedDate.getDate() + (offset * 7));
+    setSelectedDate(newDate);
+  };
+
+  const getWeekDays = (date) => {
+    const startOfWeek = new Date(date);
+    const day = startOfWeek.getDay();
+    const diff = startOfWeek.getDate() - day;
+    startOfWeek.setDate(diff);
+
+    const days = [];
+    for (let i = 0; i < 7; i++) {
+      const currentDay = new Date(startOfWeek);
+      currentDay.setDate(startOfWeek.getDate() + i);
+      days.push(currentDay);
+    }
+    return days;
+  };
+
+  const getWeekDateRange = () => {
+    const weekDays = getWeekDays(selectedDate);
+    const start = weekDays[0];
+    const end = weekDays[6];
+
+    if (start.getMonth() === end.getMonth()) {
+      return `${start.toLocaleDateString('en-US', { month: 'long', day: 'numeric' })} - ${end.getDate()}, ${end.getFullYear()}`;
+    } else {
+      return `${start.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${end.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}, ${end.getFullYear()}`;
+    }
   };
 
   const handleDayClick = (day, schedulesForDay) => {
@@ -67,23 +103,53 @@ const Calendar = ({ medications, timePeriods, toggleTaken, onAddNew }) => {
     );
   }
 
-  const days = getDaysInMonth(selectedDate);
+  const days = viewMode === 'weekly' ? getWeekDays(selectedDate) : getDaysInMonth(selectedDate);
 
   return (
     <>
       <div className="bg-white rounded-lg shadow-lg p-6">
+        {/* View Toggle */}
+        <div className="flex justify-center mb-4">
+          <div className="inline-flex rounded-lg border border-gray-300 bg-gray-100 p-1">
+            <button
+              onClick={() => setViewMode('weekly')}
+              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                viewMode === 'weekly'
+                  ? 'bg-white text-blue-600 shadow-sm'
+                  : 'text-gray-700 hover:text-gray-900'
+              }`}
+            >
+              Weekly
+            </button>
+            <button
+              onClick={() => setViewMode('monthly')}
+              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                viewMode === 'monthly'
+                  ? 'bg-white text-blue-600 shadow-sm'
+                  : 'text-gray-700 hover:text-gray-900'
+              }`}
+            >
+              Monthly
+            </button>
+          </div>
+        </div>
+
+        {/* Navigation */}
         <div className="flex items-center justify-between mb-6">
           <button
-            onClick={() => changeMonth(-1)}
+            onClick={() => viewMode === 'weekly' ? changeWeek(-1) : changeMonth(-1)}
             className="p-2 hover:bg-gray-100 rounded"
           >
             ←
           </button>
           <h2 className="text-2xl font-bold">
-            {selectedDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+            {viewMode === 'weekly'
+              ? getWeekDateRange()
+              : selectedDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+            }
           </h2>
           <button
-            onClick={() => changeMonth(1)}
+            onClick={() => viewMode === 'weekly' ? changeWeek(1) : changeMonth(1)}
             className="p-2 hover:bg-gray-100 rounded"
           >
             →
@@ -110,6 +176,8 @@ const Calendar = ({ medications, timePeriods, toggleTaken, onAddNew }) => {
               }))
             );
 
+            const isCurrentMonth = viewMode === 'monthly' ? day.getMonth() === selectedDate.getMonth() : true;
+
             return (
               <CalendarDay
                 key={index}
@@ -121,6 +189,7 @@ const Calendar = ({ medications, timePeriods, toggleTaken, onAddNew }) => {
                 setHoveredCard={setHoveredCard}
                 onClick={() => handleDayClick(day, schedulesForDay)}
                 onAddNew={onAddNew}
+                isCurrentMonth={isCurrentMonth}
               />
             );
           })}
@@ -132,6 +201,8 @@ const Calendar = ({ medications, timePeriods, toggleTaken, onAddNew }) => {
           selectedDayModal={selectedDayModal}
           onClose={() => setSelectedDayModal(null)}
           onToggleTaken={handleToggleTaken}
+          updateDailyLog={updateDailyLog}
+          getDailyLog={getDailyLog}
         />
       )}
     </>
