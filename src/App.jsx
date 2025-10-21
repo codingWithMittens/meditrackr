@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
-import Header from './components/Header';
-import Calendar from './components/Calendar/Calendar';
-import MedicationForm from './components/MedicationForm/MedicationForm';
-import MedicationList from './components/MedicationList/MedicationList';
-import PrintView from './components/PrintView/PrintView';
-import TimePeriodSettings from './components/Settings/TimePeriodSettings';
-import { useMedications } from './hooks/useMedications';
-import { useTimePeriods } from './hooks/useTimePeriods';
+import Header from './components/Header.jsx';
+import Calendar from './components/Calendar/Calendar.jsx';
+import MedicationForm from './components/MedicationForm/MedicationForm.jsx';
+import MedicationList from './components/MedicationList/MedicationList.jsx';
+import PrintView from './components/PrintView/PrintView.jsx';
+import TimePeriodSettings from './components/Settings/TimePeriodSettings.jsx';
+import { useMedications } from './hooks/useMedications.js';
+import { useTimePeriods } from './hooks/useTimePeriods.js';
 
 function App() {
   const { medications, addMedication, updateMedication, deleteMedication, toggleTaken } = useMedications();
