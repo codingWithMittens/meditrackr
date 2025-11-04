@@ -1,8 +1,8 @@
-import { useLocalStorage } from './useLocalStorage';
+import { useUserLocalStorage } from './useUserLocalStorage';
 import { DEFAULT_TIME_PERIODS } from '../constants/medications';
 
-export const useTimePeriods = () => {
-  const [timePeriods, setTimePeriods] = useLocalStorage('timePeriods', DEFAULT_TIME_PERIODS);
+export const useTimePeriods = (userId) => {
+  const [timePeriods, setTimePeriods] = useUserLocalStorage('timePeriods', DEFAULT_TIME_PERIODS, userId);
 
   const updateTimePeriod = (id, updates) => {
     setTimePeriods(prev => prev.map(period =>

@@ -1,81 +1,125 @@
 import React from 'react';
-import { Calendar, Settings, AlertCircle, Clock } from 'lucide-react';
+import ReactDOM from 'react-dom';
+import { Calendar, Settings, AlertCircle, Clock, MapPin, User, Wrench, LogOut } from 'lucide-react';
 
 const Header = ({
   currentView,
   setCurrentView,
   showForm,
   showSettingsMenu,
-  setShowSettingsMenu
+  setShowSettingsMenu,
+  user,
+  onLogout
 }) => {
-  return (
-    <div className="bg-white rounded-lg shadow-xl p-6 mb-6">
-      <div className="flex items-center justify-between mb-4">
+    return (
+    <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/50 p-4 sm:p-6 mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        {/* Title and Logo */}
         <div className="flex items-center gap-3">
-          <div className="bg-blue-500 p-3 rounded-full">
-            <Calendar className="w-8 h-8 text-white" />
+          <div className="bg-gradient-to-br from-blue-500 to-teal-600 p-2.5 sm:p-3 rounded-2xl shadow-lg">
+            <Calendar className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
           </div>
-          <h1 className="text-3xl font-bold text-gray-800">MedMindr</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-gray-800 to-teal-700 bg-clip-text text-transparent">MedMindr</h1>
         </div>
-        <div className="relative">
-          <button
-            onClick={() => setShowSettingsMenu(!showSettingsMenu)}
-            className="flex items-center gap-2 bg-gray-200 text-gray-700 p-3 rounded-lg hover:bg-gray-300 transition-colors"
-            title="Settings"
-          >
-            <Settings className="w-6 h-6" />
-          </button>
-          {showSettingsMenu && (
-            <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-xl border border-gray-200 z-50">
+
+        {/* Navigation and Settings */}
+        <div className="flex items-center justify-end gap-3">
+
+          {/* User Menu with Settings */}
+          {user && (
+            <div className="relative">
               <button
-                onClick={() => {
-                  setCurrentView('list');
-                  setShowSettingsMenu(false);
-                }}
-                className="w-full text-left px-4 py-3 hover:bg-gray-50 flex items-center gap-3 border-b border-gray-100"
+                onClick={() => setShowSettingsMenu(!showSettingsMenu)}
+                className="flex items-center gap-2 bg-white/70 text-gray-700 px-3 py-2 rounded-xl hover:bg-white/80 hover:shadow-md border border-gray-200/50 transition-all duration-200"
+                title="Settings & Account"
               >
-                <AlertCircle className="w-5 h-5 text-blue-500" />
-                <span className="font-medium">Medications</span>
+                <div className="w-6 h-6 bg-gradient-to-br from-blue-500 to-teal-600 rounded-full flex items-center justify-center">
+                  <span className="text-white text-xs font-bold">
+                    {user.name.charAt(0).toUpperCase()}
+                  </span>
+                </div>
+                <span className="text-sm font-medium hidden sm:inline max-w-20 truncate">
+                  {user.name}
+                </span>
+                <Settings className="w-4 h-4" />
               </button>
-              <button
-                onClick={() => {
-                  setCurrentView('periods');
-                  setShowSettingsMenu(false);
-                }}
-                className="w-full text-left px-4 py-3 hover:bg-gray-50 flex items-center gap-3"
-              >
-                <Clock className="w-5 h-5 text-blue-500" />
-                <span className="font-medium">Time Periods</span>
-              </button>
+                          {showSettingsMenu && ReactDOM.createPortal(
+                <>
+                  {/* Backdrop to close menu */}
+                  <div
+                    className="fixed inset-0 z-[9998]"
+                    onClick={() => setShowSettingsMenu(false)}
+                  />
+                  {/* Dropdown menu */}
+                  <div className="fixed top-20 right-4 sm:right-6 w-56 bg-white backdrop-blur-sm rounded-xl shadow-2xl border border-gray-200 z-[9999]">
+                    <button
+                      onClick={() => {
+                        setCurrentView('list');
+                        setShowSettingsMenu(false);
+                      }}
+                      className="w-full text-left px-4 py-3 hover:bg-blue-50/60 flex items-center gap-3 border-b border-gray-100/50 transition-colors duration-200 rounded-t-xl"
+                    >
+                      <AlertCircle className="w-5 h-5 text-blue-600" />
+                      <span className="font-semibold text-gray-700">Medications</span>
+                    </button>
+                    <button
+                      onClick={() => {
+                        setCurrentView('periods');
+                        setShowSettingsMenu(false);
+                      }}
+                      className="w-full text-left px-4 py-3 hover:bg-teal-50/60 flex items-center gap-3 border-b border-gray-100/50 transition-colors duration-200"
+                    >
+                      <Clock className="w-5 h-5 text-teal-600" />
+                      <span className="font-semibold text-gray-700">Time Periods</span>
+                    </button>
+                    <button
+                      onClick={() => {
+                        setCurrentView('pharmacies');
+                        setShowSettingsMenu(false);
+                      }}
+                      className="w-full text-left px-4 py-3 hover:bg-emerald-50/60 flex items-center gap-3 border-b border-gray-100/50 transition-colors duration-200"
+                    >
+                      <MapPin className="w-5 h-5 text-emerald-600" />
+                      <span className="font-semibold text-gray-700">Pharmacies</span>
+                    </button>
+                    <button
+                      onClick={() => {
+                        setCurrentView('providers');
+                        setShowSettingsMenu(false);
+                      }}
+                      className="w-full text-left px-4 py-3 hover:bg-violet-50/60 flex items-center gap-3 border-b border-gray-100/50 transition-colors duration-200"
+                    >
+                      <User className="w-5 h-5 text-violet-600" />
+                      <span className="font-semibold text-gray-700">Providers</span>
+                    </button>
+                    <button
+                      onClick={() => {
+                        setCurrentView('advanced');
+                        setShowSettingsMenu(false);
+                      }}
+                      className="w-full text-left px-4 py-3 hover:bg-amber-50/60 flex items-center gap-3 border-b border-gray-100/50 transition-colors duration-200"
+                    >
+                      <Wrench className="w-5 h-5 text-amber-600" />
+                      <span className="font-semibold text-gray-700">Account</span>
+                    </button>
+                    <button
+                      onClick={() => {
+                        onLogout();
+                        setShowSettingsMenu(false);
+                      }}
+                      className="w-full text-left px-4 py-3 hover:bg-red-50/60 flex items-center gap-3 transition-colors duration-200 rounded-b-xl"
+                    >
+                      <LogOut className="w-5 h-5 text-red-600" />
+                      <span className="font-semibold text-gray-700">Logout</span>
+                    </button>
+                  </div>
+                </>,
+                document.body
+              )}
             </div>
           )}
         </div>
       </div>
-
-      {!showForm && (
-        <div className="flex gap-2">
-          <button
-            onClick={() => setCurrentView('calendar')}
-            className={`flex items-center gap-2 px-4 py-2 rounded ${
-              currentView === 'calendar' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'
-            }`}
-          >
-            <Calendar className="w-4 h-4" />
-            Calendar
-          </button>
-          <button
-            onClick={() => setCurrentView('print')}
-            className={`flex items-center gap-2 px-4 py-2 rounded ${
-              currentView === 'print' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'
-            }`}
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
-            </svg>
-            Export
-          </button>
-        </div>
-      )}
     </div>
   );
 };

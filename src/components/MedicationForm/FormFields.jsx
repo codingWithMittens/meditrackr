@@ -2,23 +2,13 @@ import React, { useState } from 'react';
 import { AlertCircle } from 'lucide-react';
 import { COMMON_MEDICATIONS } from '../../constants/medications';
 
-const FormFields = ({ formData, formErrors, onChange, onUpdateFormData }) => {
+const FormFields = ({ formData, formErrors, onChange, onUpdateFormData, pharmacies, providers }) => {
   const [nameSuggestions, setNameSuggestions] = useState([]);
   const [genericSuggestions, setGenericSuggestions] = useState([]);
-  const [providerSuggestions, setProviderSuggestions] = useState([]);
   const [showNameDropdown, setShowNameDropdown] = useState(false);
   const [showGenericDropdown, setShowGenericDropdown] = useState(false);
-  const [showProviderDropdown, setShowProviderDropdown] = useState(false);
 
-  // Get unique providers from localStorage
-  const getStoredProviders = () => {
-    const medications = JSON.parse(localStorage.getItem('medications') || '[]');
-    const providers = medications
-      .map(med => med.provider)
-      .filter(provider => provider && provider.trim() !== '')
-      .filter((provider, index, self) => self.indexOf(provider) === index);
-    return providers;
-  };
+
 
   const handleNameChange = (e) => {
     const value = e.target.value;
@@ -60,26 +50,7 @@ const FormFields = ({ formData, formErrors, onChange, onUpdateFormData }) => {
     setShowGenericDropdown(false);
   };
 
-  const handleProviderChange = (e) => {
-    const value = e.target.value;
-    onChange(e);
 
-    if (value.length > 0) {
-      const storedProviders = getStoredProviders();
-      const filtered = storedProviders.filter(provider =>
-        provider.toLowerCase().includes(value.toLowerCase())
-      );
-      setProviderSuggestions(filtered);
-      setShowProviderDropdown(true);
-    } else {
-      setShowProviderDropdown(false);
-    }
-  };
-
-  const selectProvider = (provider) => {
-    onUpdateFormData(prev => ({ ...prev, provider }));
-    setShowProviderDropdown(false);
-  };
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -121,7 +92,7 @@ const FormFields = ({ formData, formErrors, onChange, onUpdateFormData }) => {
       </div>
 
       <div className="relative">
-        <label className="block text-sm font-medium mb-1">Generic Name (Optional)</label>
+        <label className="block text-sm font-medium mb-1">Generic Name</label>
         <input
           type="text"
           name="genericName"
@@ -184,7 +155,7 @@ const FormFields = ({ formData, formErrors, onChange, onUpdateFormData }) => {
       </div>
 
       <div>
-        <label className="block text-sm font-medium mb-1">Indication (Optional)</label>
+        <label className="block text-sm font-medium mb-1">Indication</label>
         <input
           type="text"
           name="indication"
@@ -195,32 +166,21 @@ const FormFields = ({ formData, formErrors, onChange, onUpdateFormData }) => {
         />
       </div>
 
-      <div className="relative">
-        <label className="block text-sm font-medium mb-1">Provider (Optional)</label>
-        <input
-          type="text"
+      <div>
+        <label className="block text-sm font-medium mb-1">Provider</label>
+        <select
           name="provider"
           value={formData.provider || ''}
-          onChange={handleProviderChange}
-          onFocus={() => formData.provider && setShowProviderDropdown(true)}
-          onBlur={() => setTimeout(() => setShowProviderDropdown(false), 200)}
-          className="w-full p-2 border rounded"
-          placeholder="e.g., Dr. Smith"
-          autoComplete="off"
-        />
-        {showProviderDropdown && providerSuggestions.length > 0 && (
-          <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-40 overflow-y-auto">
-            {providerSuggestions.map((provider, idx) => (
-              <div
-                key={idx}
-                onClick={() => selectProvider(provider)}
-                className="px-4 py-2 hover:bg-blue-50 cursor-pointer border-b border-gray-100 last:border-b-0"
-              >
-                {provider}
-              </div>
-            ))}
-          </div>
-        )}
+          onChange={onChange}
+          className="w-full p-2 border border-gray-300 rounded"
+        >
+          <option value="">Select a provider</option>
+          {providers && providers.map(provider => (
+            <option key={provider.id} value={provider.id}>
+              {provider.name}{provider.specialty ? ` (${provider.specialty})` : ''}
+            </option>
+          ))}
+        </select>
       </div>
 
       <div>
@@ -250,6 +210,25 @@ const FormFields = ({ formData, formErrors, onChange, onUpdateFormData }) => {
           </label>
         </div>
       </div>
+
+      {formData.type === 'rx' && pharmacies && pharmacies.length > 0 && (
+        <div className="md:col-span-2">
+          <label className="block text-sm font-medium mb-1">Pharmacy</label>
+          <select
+            name="pharmacy"
+            value={formData.pharmacy || ''}
+            onChange={onChange}
+            className="w-full p-2 border border-gray-300 rounded"
+          >
+            <option value="">Select a pharmacy</option>
+            {pharmacies.map(pharmacy => (
+              <option key={pharmacy.id} value={pharmacy.id}>
+                {pharmacy.name}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
     </div>
   );
 };

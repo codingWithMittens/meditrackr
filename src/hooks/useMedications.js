@@ -1,7 +1,7 @@
-import { useLocalStorage } from './useLocalStorage';
+import { useUserLocalStorage } from './useUserLocalStorage';
 
-export const useMedications = () => {
-  const [medications, setMedications] = useLocalStorage('medications', []);
+export const useMedications = (userId) => {
+  const [medications, setMedications] = useUserLocalStorage('medications', [], userId);
 
   const addMedication = (medicationData) => {
     const newMed = {

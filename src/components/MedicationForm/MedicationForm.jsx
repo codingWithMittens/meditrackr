@@ -4,7 +4,8 @@ import FormFields from './FormFields';
 import TimeSlotManager from './TimeSlotManager';
 import { DAYS_OF_WEEK } from '../../constants/medications';
 
-const MedicationForm = ({ editingMed, timePeriods, onSave, onCancel }) => {
+const MedicationForm = ({ editingMed, timePeriods, pharmacies, providers, onSave, onCancel }) => {
+  const defaultPharmacy = pharmacies?.find(p => p.isDefault);
   const [formData, setFormData] = useState({
     name: '',
     genericName: '',
@@ -17,7 +18,8 @@ const MedicationForm = ({ editingMed, timePeriods, onSave, onCancel }) => {
     notes: '',
     indication: '',
     provider: '',
-    type: 'rx'
+    type: 'rx',
+    pharmacy: defaultPharmacy?.id || ''
   });
   const [formErrors, setFormErrors] = useState({});
 
@@ -35,10 +37,11 @@ const MedicationForm = ({ editingMed, timePeriods, onSave, onCancel }) => {
         notes: editingMed.notes || '',
         indication: editingMed.indication || '',
         provider: editingMed.provider || '',
-        type: editingMed.type || 'rx'
+        type: editingMed.type || 'rx',
+        pharmacy: editingMed.pharmacy || defaultPharmacy?.id || ''
       });
     }
-  }, [editingMed]);
+  }, [editingMed, defaultPharmacy]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -90,7 +93,7 @@ const MedicationForm = ({ editingMed, timePeriods, onSave, onCancel }) => {
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-xl p-6 mb-6">
+    <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/50 p-6 mb-6">
       <h2 className="text-2xl font-bold mb-4">
         {editingMed ? 'Edit Medication' : 'Add New Medication'}
       </h2>
@@ -100,6 +103,8 @@ const MedicationForm = ({ editingMed, timePeriods, onSave, onCancel }) => {
           formErrors={formErrors}
           onChange={handleInputChange}
           onUpdateFormData={setFormData}
+          pharmacies={pharmacies}
+          providers={providers}
         />
 
         {formData.frequency === 'weekly' && (
@@ -113,10 +118,10 @@ const MedicationForm = ({ editingMed, timePeriods, onSave, onCancel }) => {
                   key={index}
                   type="button"
                   onClick={() => toggleWeeklyDay(index)}
-                  className={`px-4 py-2 rounded border-2 transition-colors ${
+                  className={`px-4 py-3 rounded-xl border-2 font-semibold transition-all duration-200 ${
                     formData.weeklyDays.includes(index)
-                      ? 'bg-blue-500 border-blue-600 text-white'
-                      : 'bg-white border-gray-300 text-gray-700 hover:border-blue-400'
+                      ? 'bg-gradient-to-r from-blue-500 to-teal-600 border-blue-500 text-white shadow-md shadow-blue-500/30'
+                      : 'bg-white border-gray-300 text-gray-700 hover:border-blue-400 hover:shadow-sm'
                   }`}
                 >
                   {day.slice(0, 3)}
@@ -145,7 +150,7 @@ const MedicationForm = ({ editingMed, timePeriods, onSave, onCancel }) => {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">End Date (Optional)</label>
+            <label className="block text-sm font-medium mb-1">End Date</label>
             <input
               type="date"
               name="endDate"
@@ -187,13 +192,13 @@ const MedicationForm = ({ editingMed, timePeriods, onSave, onCancel }) => {
         <div className="flex gap-2">
           <button
             onClick={handleSubmit}
-            className="bg-blue-500 text-white px-6 py-2 rounded hover:bg-blue-600"
+            className="bg-gradient-to-r from-blue-500 to-teal-600 text-white px-6 py-3 rounded-xl hover:from-blue-600 hover:to-teal-700 font-semibold shadow-lg shadow-blue-500/30 transition-all duration-200 hover:shadow-xl hover:shadow-blue-500/40"
           >
             {editingMed ? 'Update Medication' : 'Save Medication'}
           </button>
           <button
             onClick={onCancel}
-            className="bg-gray-300 text-gray-700 px-6 py-2 rounded hover:bg-gray-400"
+            className="bg-white/70 text-gray-700 px-6 py-3 rounded-xl hover:bg-white hover:shadow-md font-semibold border border-gray-200/50 transition-all duration-200"
           >
             Cancel
           </button>

@@ -26,15 +26,15 @@ const CalendarDay = ({
 
   return (
     <div
-      className={`min-h-24 p-2 border rounded relative ${
-        isToday ? 'bg-blue-50 border-blue-300' : 'border-gray-200'
-      } ${hasSchedules ? 'hover:bg-gray-50 cursor-pointer' : ''} ${
+      className={`min-h-24 p-3 border rounded-xl relative transition-all duration-200 ${
+        isToday ? 'bg-gradient-to-br from-blue-50 to-teal-50 border-blue-300 shadow-md' : 'border-gray-200/60 bg-white/50'
+      } ${hasSchedules ? 'hover:bg-white/80 hover:shadow-lg hover:border-blue-200 cursor-pointer' : ''} ${
         !isCurrentMonth ? 'opacity-40' : ''
       }`}
       onClick={onClick}
     >
       {allDayTaken && (
-        <div className="absolute top-1 right-1 bg-green-600 rounded-full p-1 shadow-md">
+        <div className="absolute top-2 right-2 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-full p-1.5 shadow-lg shadow-emerald-500/30">
           <Check className="w-3 h-3 text-white" />
         </div>
       )}
@@ -46,7 +46,7 @@ const CalendarDay = ({
               e.stopPropagation();
               onAddNew();
             }}
-            className="text-xs text-blue-500 hover:text-blue-700 underline"
+            className="text-xs text-blue-600 hover:text-blue-800 hover:underline font-medium transition-colors duration-200"
           >
             Add medication
           </button>
@@ -70,7 +70,7 @@ const CalendarDay = ({
           return (
             <div
               key={group.time}
-              className={`text-xs p-1.5 rounded border relative overflow-hidden ${colorClass}`}
+              className={`text-xs p-2 rounded-lg border relative overflow-hidden shadow-sm transition-all duration-200 hover:shadow-md ${colorClass}`}
               onMouseEnter={() => setHoveredCard(`${dateStr}-${group.time}`)}
               onMouseLeave={() => setHoveredCard(null)}
             >
@@ -82,15 +82,15 @@ const CalendarDay = ({
               )}
 
               {allScheduledTaken && totalCount > 0 && (
-                <div className="absolute top-0.5 right-0.5">
-                  <div className="bg-green-600 rounded-full p-0.5">
+                <div className="absolute top-1 right-1">
+                  <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-full p-0.5 shadow-sm">
                     <Check className="w-2.5 h-2.5 text-white" />
                   </div>
                 </div>
               )}
 
               {someScheduledTaken && (
-                <div className="absolute top-0.5 right-0.5 bg-yellow-500 text-white text-[9px] font-bold px-1 rounded">
+                <div className="absolute top-1 right-1 bg-gradient-to-r from-amber-400 to-amber-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full shadow-sm">
                   {takenCount}/{totalCount}
                 </div>
               )}

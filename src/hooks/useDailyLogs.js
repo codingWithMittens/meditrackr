@@ -1,7 +1,7 @@
-import { useLocalStorage } from './useLocalStorage';
+import { useUserLocalStorage } from './useUserLocalStorage';
 
-export const useDailyLogs = () => {
-  const [dailyLogs, setDailyLogs] = useLocalStorage('dailyLogs', {});
+export const useDailyLogs = (userId) => {
+  const [dailyLogs, setDailyLogs] = useUserLocalStorage('dailyLogs', {}, userId);
 
   const updateDailyLog = (date, updates) => {
     setDailyLogs(prev => ({

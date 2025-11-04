@@ -87,10 +87,10 @@ const DayModal = ({ selectedDayModal, onClose, onToggleTaken, updateDailyLog, ge
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-lg shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-auto"
+        className="bg-white/90 backdrop-blur-md rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-auto border border-white/50"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="sticky top-0 bg-white border-b border-gray-200 p-6 flex items-center justify-between z-10">
+        <div className="sticky top-0 bg-white/90 backdrop-blur-md border-b border-gray-200/50 p-6 flex items-center justify-between z-10 rounded-t-2xl">
           <div>
             <h2 className="text-2xl font-bold">Daily Schedule</h2>
             <p className="text-gray-600">
@@ -104,7 +104,7 @@ const DayModal = ({ selectedDayModal, onClose, onToggleTaken, updateDailyLog, ge
           </div>
           <button
             onClick={onClose}
-            className="text-gray-500 hover:text-gray-700"
+            className="text-gray-500 hover:text-gray-700 p-2 rounded-xl hover:bg-gray-100/70 transition-all duration-200"
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -113,6 +113,19 @@ const DayModal = ({ selectedDayModal, onClose, onToggleTaken, updateDailyLog, ge
         </div>
 
         <div className="p-6">
+          {/* Future Date Notification - Right below header */}
+          {isFutureDate && (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+              <div className="flex items-center gap-2">
+                <svg className="w-5 h-5 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                </svg>
+                <p className="text-blue-700 font-medium">Future Date - View Only</p>
+              </div>
+              <p className="text-blue-600 text-sm mt-1">You can view the scheduled medications, but cannot mark them as taken or edit daily logs for future dates.</p>
+            </div>
+          )}
+
           {timeGroups.filter(g => !g.medications.every(m => m.asNeeded)).length === 0 ? (
             <p className="text-gray-500 text-center py-8">No scheduled medications for this day</p>
           ) : (
@@ -160,10 +173,10 @@ const DayModal = ({ selectedDayModal, onClose, onToggleTaken, updateDailyLog, ge
                           ) : (
                             <button
                               onClick={() => onToggleTaken(med.medId, selectedDayModal.dateStr, med.time)}
-                              className={`w-8 h-8 rounded border-2 flex items-center justify-center transition-colors mx-auto ${
+                              className={`w-9 h-9 rounded-xl border-2 flex items-center justify-center transition-all duration-200 mx-auto ${
                                 med.taken
-                                  ? 'bg-green-500 border-green-600 text-white hover:bg-green-600'
-                                  : 'bg-white border-gray-300 hover:border-green-500 hover:bg-green-50'
+                                  ? 'bg-gradient-to-br from-emerald-500 to-emerald-600 border-emerald-500 text-white hover:from-emerald-600 hover:to-emerald-700 shadow-lg shadow-emerald-500/30'
+                                  : 'bg-white border-gray-300 hover:border-emerald-500 hover:bg-emerald-50 hover:shadow-md'
                               }`}
                               title={med.taken ? "Mark as not taken" : "Mark as taken"}
                             >
@@ -181,17 +194,6 @@ const DayModal = ({ selectedDayModal, onClose, onToggleTaken, updateDailyLog, ge
 
           {/* Pain and Emotions Section */}
           <div className="mt-8 space-y-6 border-t border-gray-200 pt-6">
-            {isFutureDate && (
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-                <div className="flex items-center gap-2">
-                  <svg className="w-5 h-5 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                  </svg>
-                  <p className="text-blue-700 font-medium">Future Date - View Only</p>
-                </div>
-                <p className="text-blue-600 text-sm mt-1">You can view the scheduled medications, but cannot mark them as taken or edit daily logs for future dates.</p>
-              </div>
-            )}
             {/* Pain Scale */}
             <div>
               <div className="flex items-center gap-3 mb-3">
@@ -256,7 +258,7 @@ const DayModal = ({ selectedDayModal, onClose, onToggleTaken, updateDailyLog, ge
 
             {/* Additional Tracking */}
             <div className="border-t border-gray-200 pt-6">
-              <h3 className="text-lg font-semibold text-gray-700 mb-4">Additional Tracking (Optional)</h3>
+              <h3 className="text-lg font-semibold text-gray-700 mb-4">Additional Tracking</h3>
 
               {/* New Symptoms Toggle */}
               <div className="mb-4">
@@ -306,7 +308,7 @@ const DayModal = ({ selectedDayModal, onClose, onToggleTaken, updateDailyLog, ge
           <div className="mt-6 flex justify-end">
             <button
               onClick={onClose}
-              className="bg-blue-500 text-white px-6 py-2 rounded hover:bg-blue-600"
+              className="bg-gradient-to-r from-blue-500 to-teal-600 text-white px-6 py-3 rounded-xl hover:from-blue-600 hover:to-teal-700 font-semibold shadow-lg shadow-blue-500/30 transition-all duration-200"
             >
               Close
             </button>
