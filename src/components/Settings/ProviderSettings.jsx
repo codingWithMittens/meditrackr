@@ -1,8 +1,17 @@
 import React, { useState } from 'react';
-import { Plus, Edit3, Trash2, Phone, MapPin, AlertCircle, User } from 'lucide-react';
+import { Plus, Edit3, Trash2, Phone, MapPin, AlertCircle, User, ArrowLeft, Calendar } from 'lucide-react';
 
-const ProviderSettings = ({ providers, onAdd, onUpdate, onDelete }) => {
+const ProviderSettings = ({ providers, onAdd, onUpdate, onDelete, onBackToCalendar, prefillData, onPrefillUsed }) => {
   const [showForm, setShowForm] = useState(false);
+
+  // Auto-open form if prefill data is provided (tour)
+  React.useEffect(() => {
+    if (prefillData) {
+      setFormData(prefillData);
+      setShowForm(true);
+      onPrefillUsed?.();
+    }
+  }, [prefillData, onPrefillUsed]);
   const [editingProvider, setEditingProvider] = useState(null);
   const [formData, setFormData] = useState({
     name: '',
@@ -19,26 +28,26 @@ const ProviderSettings = ({ providers, onAdd, onUpdate, onDelete }) => {
 
   const validateForm = () => {
     const errors = {};
-    
+
     if (!formData.name.trim()) {
       errors.name = 'Provider name is required';
     }
-    
+
     if (!formData.address.trim()) {
       errors.address = 'Address is required';
     }
-    
+
     if (!formData.phone.trim()) {
       errors.phone = 'Phone number is required';
     }
-    
+
     return errors;
   };
 
   const handleSubmit = () => {
     const errors = validateForm();
     setFormErrors(errors);
-    
+
     if (Object.keys(errors).length > 0) {
       return;
     }
@@ -48,7 +57,7 @@ const ProviderSettings = ({ providers, onAdd, onUpdate, onDelete }) => {
     } else {
       onAdd(formData);
     }
-    
+
     resetForm();
   };
 
@@ -79,13 +88,24 @@ const ProviderSettings = ({ providers, onAdd, onUpdate, onDelete }) => {
   return (
     <div className="bg-white rounded-lg shadow-lg p-6">
       <div className="flex items-center justify-between mb-6">
-        <div>
-          <h2 className="text-2xl font-bold">Provider Settings</h2>
-          <p className="text-gray-600">Manage your healthcare providers</p>
+        <div className="flex items-center gap-4">
+          <button
+            onClick={onBackToCalendar || (() => window.history.back())}
+            className="flex items-center gap-2 bg-white/70 text-gray-700 px-4 py-2 rounded-xl hover:bg-white hover:shadow-md border border-gray-200/50 transition-all duration-200"
+            title="Back to Calendar"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            <Calendar className="w-4 h-4" />
+            <span className="text-sm font-medium hidden sm:inline">Calendar</span>
+          </button>
+          <div>
+            <h2 className="text-2xl font-bold">Provider Settings</h2>
+            <p className="text-gray-600">Manage your healthcare providers</p>
+          </div>
         </div>
         <button
           onClick={() => setShowForm(!showForm)}
-          className="inline-flex items-center gap-2 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600"
+          className="inline-flex items-center gap-2 bg-gradient-to-r from-blue-500 to-teal-600 text-white px-4 py-2 rounded-xl hover:from-blue-600 hover:to-teal-700 font-semibold shadow-lg shadow-blue-500/30 transition-all duration-200"
         >
           <Plus className="w-4 h-4" />
           Add Provider
@@ -93,11 +113,11 @@ const ProviderSettings = ({ providers, onAdd, onUpdate, onDelete }) => {
       </div>
 
       {showForm && (
-        <div className="bg-gray-50 rounded-lg p-4 mb-6">
+        <div className="bg-gray-50 rounded-lg p-4 mb-6 provider-form">
           <h3 className="text-lg font-semibold mb-4">
             {editingProvider ? 'Edit Provider' : 'Add New Provider'}
           </h3>
-          
+
           <div className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
@@ -220,16 +240,16 @@ const ProviderSettings = ({ providers, onAdd, onUpdate, onDelete }) => {
                       </span>
                     )}
                   </div>
-                  
+
                   <div className="space-y-2">
                     <div className="flex items-start gap-2 text-gray-600">
                       <MapPin className="w-4 h-4 mt-0.5 flex-shrink-0" />
                       <span className="text-sm">{provider.address}</span>
                     </div>
-                    
+
                     <div className="flex items-center gap-2 text-gray-600">
                       <Phone className="w-4 h-4 flex-shrink-0" />
-                      <a 
+                      <a
                         href={`tel:${provider.phone}`}
                         className="text-sm hover:text-blue-600 transition-colors"
                       >
@@ -238,7 +258,7 @@ const ProviderSettings = ({ providers, onAdd, onUpdate, onDelete }) => {
                     </div>
                   </div>
                 </div>
-                
+
                 <div className="flex gap-1 ml-4">
                   <button
                     onClick={() => handleEdit(provider)}

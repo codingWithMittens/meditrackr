@@ -20,10 +20,19 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const checkAuthStatus = () => {
       try {
+        console.log('Auth check - checking localStorage...');
         const currentUser = localStorage.getItem('current_authenticated_user');
+        console.log('Auth check - current_authenticated_user:', currentUser);
+
         if (currentUser) {
           const userData = JSON.parse(currentUser);
+          console.log('Auth check - parsed user data:', userData);
           setUser(userData);
+
+          // Debug: Check what medication data exists for this user
+          const medKey = `medications_${userData.id}`;
+          const medications = localStorage.getItem(medKey);
+          console.log(`Auth check - medications for user ${userData.id}:`, medications);
         }
       } catch (error) {
         console.error('Error checking auth status:', error);
@@ -39,11 +48,11 @@ export const AuthProvider = ({ children }) => {
   const register = async (userData) => {
     try {
       const { email, password, name } = userData;
-      
+
       // Check if user already exists
       const users = JSON.parse(localStorage.getItem('registered_users') || '[]');
       const existingUser = users.find(u => u.email.toLowerCase() === email.toLowerCase());
-      
+
       if (existingUser) {
         throw new Error('An account with this email already exists');
       }
@@ -77,11 +86,11 @@ export const AuthProvider = ({ children }) => {
   const login = async (credentials) => {
     try {
       const { email, password } = credentials;
-      
+
       // Get registered users
       const users = JSON.parse(localStorage.getItem('registered_users') || '[]');
       const user = users.find(u => u.email.toLowerCase() === email.toLowerCase());
-      
+
       if (!user) {
         throw new Error('No account found with this email address');
       }
@@ -119,12 +128,12 @@ export const AuthProvider = ({ children }) => {
       if (!user) throw new Error('No user logged in');
 
       const users = JSON.parse(localStorage.getItem('registered_users') || '[]');
-      const updatedUsers = users.map(u => 
+      const updatedUsers = users.map(u =>
         u.id === user.id ? { ...u, ...updates } : u
       );
-      
+
       localStorage.setItem('registered_users', JSON.stringify(updatedUsers));
-      
+
       const updatedUser = { ...user, ...updates };
       setUser(updatedUser);
       localStorage.setItem('current_authenticated_user', JSON.stringify(updatedUser));
@@ -153,7 +162,7 @@ export const AuthProvider = ({ children }) => {
         `timePeriods_${user.id}`,
         `dailyLogs_${user.id}`
       ];
-      
+
       userDataKeys.forEach(key => {
         localStorage.removeItem(key);
       });

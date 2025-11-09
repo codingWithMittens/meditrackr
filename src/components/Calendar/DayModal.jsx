@@ -62,13 +62,15 @@ const DayModal = ({ selectedDayModal, onClose, onToggleTaken, updateDailyLog, ge
   };
 
   const getPainIcon = (value) => {
-    const icons = ['😊', '🙂', '😐', '😟', '😫'];
+    // More distinct pain-focused icons
+    const icons = ['😊', '🙂', '😐', '😣', '😵'];
     return icons[value] || '😐';
   };
 
   const getEmotionIcon = (value) => {
-    const icons = ['😢', '😞', '😐', '😊', '😄'];
-    return icons[value] || '😐';
+    // Heart-based emotional indicators for better distinction
+    const icons = ['💙', '💚', '💛', '🧡', '❤️'];
+    return icons[value] || '💛';
   };
 
   const getPainLabel = (value) => {
@@ -126,10 +128,15 @@ const DayModal = ({ selectedDayModal, onClose, onToggleTaken, updateDailyLog, ge
             </div>
           )}
 
+          {/* Scheduled Medications */}
           {timeGroups.filter(g => !g.medications.every(m => m.asNeeded)).length === 0 ? (
-            <p className="text-gray-500 text-center py-8">No scheduled medications for this day</p>
+            <div className="text-center py-6 mb-6">
+              <p className="text-gray-500">No scheduled medications for this day</p>
+            </div>
           ) : (
-            <table className="w-full border-collapse border border-gray-300 mb-6">
+            <>
+              <h3 className="text-lg font-semibold text-gray-700 mb-3">Scheduled Medications</h3>
+              <table className="w-full border-collapse border border-gray-300 mb-6">
               <thead>
                 <tr className="bg-gray-100">
                   <th className="border border-gray-300 px-4 py-2 text-left font-semibold">Time</th>
@@ -190,6 +197,48 @@ const DayModal = ({ selectedDayModal, onClose, onToggleTaken, updateDailyLog, ge
                 ))}
               </tbody>
             </table>
+            </>
+          )}
+
+          {/* As-Needed Medications */}
+          {selectedDayModal.schedulesForDay.some(s => s.asNeeded) && (
+            <>
+              <h3 className="text-lg font-semibold text-gray-700 mb-3">As-Needed Medications</h3>
+              <div className="grid gap-3 mb-6">
+                {selectedDayModal.schedulesForDay
+                  .filter(med => med.asNeeded)
+                  .map((med, idx) => (
+                    <div key={idx} className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1">
+                          <h4 className="font-semibold text-gray-900">{med.medName}</h4>
+                          <p className="text-sm text-gray-600">{med.medDosage}</p>
+                          <p className="text-xs text-purple-600 mt-1">Take as needed</p>
+                        </div>
+                        <div className="ml-4">
+                          {isFutureDate ? (
+                            <div className="w-8 h-8 rounded border-2 flex items-center justify-center bg-gray-100 border-gray-300">
+                              {med.taken && <Check className="w-5 h-5 text-gray-400" />}
+                            </div>
+                          ) : (
+                            <button
+                              onClick={() => onToggleTaken(med.medId, selectedDayModal.dateStr, med.time)}
+                              className={`w-10 h-10 rounded-xl border-2 flex items-center justify-center transition-all duration-200 ${
+                                med.taken
+                                  ? 'bg-gradient-to-br from-emerald-500 to-emerald-600 border-emerald-500 text-white hover:from-emerald-600 hover:to-emerald-700 shadow-lg shadow-emerald-500/30'
+                                  : 'bg-white border-purple-300 hover:border-emerald-500 hover:bg-emerald-50 hover:shadow-md'
+                              }`}
+                              title={med.taken ? "Mark as not taken" : "Mark as taken"}
+                            >
+                              {med.taken && <Check className="w-6 h-6" />}
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+              </div>
+            </>
           )}
 
           {/* Pain and Emotions Section */}

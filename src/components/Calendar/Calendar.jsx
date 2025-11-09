@@ -6,13 +6,20 @@ import { DAYS_OF_WEEK_SHORT } from '../../constants/medications';
 import CalendarDay from './CalendarDay';
 import DayModal from './DayModal';
 
-const Calendar = ({ medications, timePeriods, toggleTaken, onAddNew, updateDailyLog, getDailyLog, onNavigateToReports }) => {
+const Calendar = ({ medications, timePeriods, toggleTaken, onAddNew, updateDailyLog, getDailyLog, onNavigateToReports, userId }) => {
   // Detect if mobile on mount
   const isMobile = () => window.innerWidth < 768;
   const [viewMode, setViewMode] = useState(isMobile() ? 'weekly' : 'monthly');
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [selectedDayModal, setSelectedDayModal] = useState(null);
   const [hoveredCard, setHoveredCard] = useState(null);
+  // Track if we've shown the initial modal for this user session
+  const [hasShownInitialModal, setHasShownInitialModal] = useState(() => {
+    // Check if we've already shown the modal for this user today
+    if (!userId) return false;
+    const sessionKey = `initial_modal_shown_${userId}_${new Date().toDateString()}`;
+    return localStorage.getItem(sessionKey) === 'true';
+  });
 
   const changeMonth = (offset) => {
     setSelectedDate(new Date(selectedDate.getFullYear(), selectedDate.getMonth() + offset, 1));
@@ -52,10 +59,18 @@ const Calendar = ({ medications, timePeriods, toggleTaken, onAddNew, updateDaily
   };
 
   const handleDayClick = (day, schedulesForDay) => {
-    if (!day || schedulesForDay.length === 0) return;
+    if (!day) return;
 
     const dateStr = formatDate(day);
+
+    // Always allow clicking on days - they might have as-needed medications
+    // or user might want to add daily log info
     setSelectedDayModal({ date: day, dateStr, schedulesForDay });
+  };
+
+  const handleCloseModal = () => {
+    setSelectedDayModal(null);
+    // Don't reset hasShownInitialModal when manually closing
   };
 
   const handleToggleTaken = (medId, date, time) => {
@@ -82,9 +97,9 @@ const Calendar = ({ medications, timePeriods, toggleTaken, onAddNew, updateDaily
     }
   }, [medications, selectedDayModal?.dateStr]);
 
-  // Auto-open today's modal if there are scheduled medications (on login)
+  // Auto-open today's modal if there are scheduled medications (only on initial login)
   useEffect(() => {
-    if (medications.length > 0 && !selectedDayModal) {
+    if (medications.length > 0 && !selectedDayModal && !hasShownInitialModal) {
       const today = new Date();
       const todayStr = formatDate(today);
 
@@ -108,8 +123,15 @@ const Calendar = ({ medications, timePeriods, toggleTaken, onAddNew, updateDaily
           schedulesForDay: todaysSchedules
         });
       }
+
+      // Mark that we've shown the initial modal (or decided not to) for today
+      if (userId) {
+        const sessionKey = `initial_modal_shown_${userId}_${new Date().toDateString()}`;
+        localStorage.setItem(sessionKey, 'true');
+        setHasShownInitialModal(true);
+      }
     }
-  }, [medications]); // Only depend on medications to trigger on login
+  }, [medications, selectedDayModal, hasShownInitialModal]); // Include all dependencies
 
   if (medications.length === 0) {
     return (
@@ -124,7 +146,7 @@ const Calendar = ({ medications, timePeriods, toggleTaken, onAddNew, updateDaily
           </p>
           <button
             onClick={onAddNew}
-            className="inline-flex items-center gap-2 bg-gradient-to-r from-blue-500 to-teal-600 text-white px-6 py-3 rounded-xl hover:from-blue-600 hover:to-teal-700 text-lg font-semibold shadow-lg shadow-blue-500/30 transition-all duration-200 hover:shadow-xl hover:shadow-blue-500/40 transform hover:scale-105"
+            className="inline-flex items-center gap-2 bg-gradient-to-r from-blue-500 to-teal-600 text-white px-6 py-3 rounded-xl hover:from-blue-600 hover:to-teal-700 text-lg font-semibold shadow-lg shadow-blue-500/30 transition-all duration-200 hover:shadow-xl hover:shadow-blue-500/40 transform hover:scale-105 add-medication-btn"
           >
             <Plus className="w-6 h-6" />
             Add Your First Medication
@@ -185,12 +207,14 @@ const Calendar = ({ medications, timePeriods, toggleTaken, onAddNew, updateDaily
             {/* Reports/Export Button */}
             <button
               onClick={onNavigateToReports}
-              className="flex items-center gap-2 bg-white/70 text-gray-700 px-3 py-2 rounded-xl hover:bg-white hover:shadow-md border border-gray-200/50 transition-all duration-200"
+              className="flex items-center gap-2 bg-white/70 text-gray-700 px-3 py-2 rounded-xl hover:bg-white hover:shadow-md border border-gray-200/50 transition-all duration-200 reports-btn"
               title="Reports & Export"
             >
               <FileText className="w-4 h-4" />
               <span className="text-sm font-medium hidden sm:inline">Reports</span>
             </button>
+
+
           </div>
 
           <button
@@ -201,7 +225,7 @@ const Calendar = ({ medications, timePeriods, toggleTaken, onAddNew, updateDaily
           </button>
         </div>
 
-        <div className="grid grid-cols-7 gap-2">
+        <div className="grid grid-cols-7 gap-2 calendar-grid">
           {DAYS_OF_WEEK_SHORT.map(day => (
             <div key={day} className="text-center font-semibold text-gray-600 p-2">
               {day}
@@ -211,7 +235,7 @@ const Calendar = ({ medications, timePeriods, toggleTaken, onAddNew, updateDaily
           {days.map((day, index) => {
             if (!day) return <div key={index} className="p-2"></div>;
 
-            const dateStr = formatDate(day);
+                        const dateStr = formatDate(day);
             const schedulesForDay = medications.flatMap(med =>
               getSchedulesForDate(med, dateStr).map(s => ({
                 ...s,
@@ -235,6 +259,7 @@ const Calendar = ({ medications, timePeriods, toggleTaken, onAddNew, updateDaily
                 onClick={() => handleDayClick(day, schedulesForDay)}
                 onAddNew={onAddNew}
                 isCurrentMonth={isCurrentMonth}
+                getDailyLog={getDailyLog}
               />
             );
           })}
@@ -244,7 +269,7 @@ const Calendar = ({ medications, timePeriods, toggleTaken, onAddNew, updateDaily
       {selectedDayModal && (
         <DayModal
           selectedDayModal={selectedDayModal}
-          onClose={() => setSelectedDayModal(null)}
+          onClose={handleCloseModal}
           onToggleTaken={handleToggleTaken}
           updateDailyLog={updateDailyLog}
           getDailyLog={getDailyLog}

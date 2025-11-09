@@ -1,8 +1,17 @@
 import React, { useState } from 'react';
-import { Plus, Edit3, Trash2, Phone, MapPin, AlertCircle } from 'lucide-react';
+import { Plus, Edit3, Trash2, Phone, MapPin, AlertCircle, ArrowLeft, Calendar } from 'lucide-react';
 
-const PharmacySettings = ({ pharmacies, onAdd, onUpdate, onDelete, onSetDefault }) => {
+const PharmacySettings = ({ pharmacies, onAdd, onUpdate, onDelete, onSetDefault, onBackToCalendar, prefillData, onPrefillUsed }) => {
   const [showForm, setShowForm] = useState(false);
+
+  // Auto-open form if prefill data is provided (tour)
+  React.useEffect(() => {
+    if (prefillData) {
+      setFormData(prefillData);
+      setShowForm(true);
+      onPrefillUsed?.();
+    }
+  }, [prefillData, onPrefillUsed]);
   const [editingPharmacy, setEditingPharmacy] = useState(null);
   const [formData, setFormData] = useState({
     name: '',
@@ -77,13 +86,24 @@ const PharmacySettings = ({ pharmacies, onAdd, onUpdate, onDelete, onSetDefault 
   return (
     <div className="bg-white rounded-lg shadow-lg p-6">
       <div className="flex items-center justify-between mb-6">
-        <div>
-          <h2 className="text-2xl font-bold">Pharmacy Settings</h2>
-          <p className="text-gray-600">Manage your pharmacy information</p>
+        <div className="flex items-center gap-4">
+          <button
+            onClick={onBackToCalendar || (() => window.history.back())}
+            className="flex items-center gap-2 bg-white/70 text-gray-700 px-4 py-2 rounded-xl hover:bg-white hover:shadow-md border border-gray-200/50 transition-all duration-200"
+            title="Back to Calendar"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            <Calendar className="w-4 h-4" />
+            <span className="text-sm font-medium hidden sm:inline">Calendar</span>
+          </button>
+          <div>
+            <h2 className="text-2xl font-bold">Pharmacy Settings</h2>
+            <p className="text-gray-600">Manage your pharmacy information</p>
+          </div>
         </div>
         <button
           onClick={() => setShowForm(!showForm)}
-          className="inline-flex items-center gap-2 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600"
+          className="inline-flex items-center gap-2 bg-gradient-to-r from-blue-500 to-teal-600 text-white px-4 py-2 rounded-xl hover:from-blue-600 hover:to-teal-700 font-semibold shadow-lg shadow-blue-500/30 transition-all duration-200"
         >
           <Plus className="w-4 h-4" />
           Add Pharmacy
@@ -91,7 +111,7 @@ const PharmacySettings = ({ pharmacies, onAdd, onUpdate, onDelete, onSetDefault 
       </div>
 
       {showForm && (
-        <div className="bg-gray-50 rounded-lg p-4 mb-6">
+        <div className="bg-gray-50 rounded-lg p-4 mb-6 pharmacy-form">
           <h3 className="text-lg font-semibold mb-4">
             {editingPharmacy ? 'Edit Pharmacy' : 'Add New Pharmacy'}
           </h3>

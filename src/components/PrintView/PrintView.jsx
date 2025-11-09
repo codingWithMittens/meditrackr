@@ -1,12 +1,22 @@
 import React, { useState, useRef } from 'react';
+import ReactDOM from 'react-dom';
 import { Download, FileText, ChevronDown, ChevronUp, Settings, ArrowLeft, Calendar } from 'lucide-react';
 import MedicationTable from './MedicationTable';
 import HistoricalView from './HistoricalView';
 
-const PrintView = ({ medications, timePeriods, pharmacies, providers, dailyLogs, onBackToCalendar }) => {
+const PrintView = ({ medications, timePeriods, pharmacies, providers, dailyLogs, onBackToCalendar, user }) => {
   const [printViewType, setPrintViewType] = useState('list');
   const [showExportDropdown, setShowExportDropdown] = useState(false);
   const [showFieldOptions, setShowFieldOptions] = useState(false);
+  const handlePrint = () => {
+    // Close any open modals/dropdowns before printing
+    setShowExportDropdown(false);
+    // Small delay to ensure UI updates before print dialog
+    setTimeout(() => {
+      window.print();
+    }, 100);
+  };
+
   const [selectedFields, setSelectedFields] = useState({
     name: true,
     genericName: false,
@@ -111,6 +121,27 @@ const PrintView = ({ medications, timePeriods, pharmacies, providers, dailyLogs,
 
   return (
     <div className="bg-white rounded-lg shadow-lg p-6">
+      {/* User Information - Only visible when printing */}
+      <div className="hidden print:block mb-6 pb-4 border-b border-gray-300">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">MedMindr - Medication Report</h1>
+          {user && (
+            <div className="text-gray-700">
+              <p className="text-lg font-semibold">{user.name}</p>
+              <p className="text-sm">{user.email}</p>
+              <p className="text-sm text-gray-500 mt-1">
+                Report generated: {new Date().toLocaleDateString('en-US', {
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit'
+                })}
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
       <div className="flex items-center justify-between mb-6 no-print">
         <div className="flex items-center gap-4">
           <button
@@ -127,36 +158,45 @@ const PrintView = ({ medications, timePeriods, pharmacies, providers, dailyLogs,
         <div className="relative">
           <button
             onClick={() => setShowExportDropdown(!showExportDropdown)}
-            className="flex items-center gap-2 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+            className="flex items-center gap-2 bg-gradient-to-r from-blue-500 to-teal-600 text-white px-4 py-2 rounded-xl hover:from-blue-600 hover:to-teal-700 font-semibold shadow-lg shadow-blue-500/30 transition-all duration-200 hover:shadow-xl hover:shadow-blue-500/40"
           >
             <Download className="w-4 h-4" />
             Export
             <ChevronDown className="w-4 h-4" />
           </button>
 
-          {showExportDropdown && (
-            <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-200 z-50">
-              <button
-                onClick={() => {
-                  window.print();
-                  setShowExportDropdown(false);
-                }}
-                className="w-full text-left px-4 py-3 hover:bg-gray-50 flex items-center gap-3 border-b border-gray-100"
-              >
-                <FileText className="w-5 h-5 text-blue-500" />
-                <span className="font-medium">Print/PDF</span>
-              </button>
-              <button
-                onClick={() => {
-                  handleExportData();
-                  setShowExportDropdown(false);
-                }}
-                className="w-full text-left px-4 py-3 hover:bg-gray-50 flex items-center gap-3"
-              >
-                <Download className="w-5 h-5 text-green-500" />
-                <span className="font-medium">JSON File</span>
-              </button>
-            </div>
+          {showExportDropdown && ReactDOM.createPortal(
+            <>
+              {/* Backdrop to close menu */}
+              <div
+                className="fixed inset-0 z-[9998]"
+                onClick={() => setShowExportDropdown(false)}
+              />
+              {/* Dropdown menu */}
+              <div className="fixed top-20 right-4 sm:right-6 w-48 bg-white/90 backdrop-blur-md rounded-xl shadow-2xl border border-white/50 z-[9999]">
+                <button
+                  onClick={() => {
+                    handlePrint();
+                    setShowExportDropdown(false);
+                  }}
+                  className="w-full text-left px-4 py-3 hover:bg-blue-50/60 flex items-center gap-3 border-b border-gray-100/50 transition-colors duration-200 rounded-t-xl"
+                >
+                  <FileText className="w-5 h-5 text-blue-500" />
+                  <span className="font-semibold text-gray-700">Print/PDF</span>
+                </button>
+                <button
+                  onClick={() => {
+                    handleExportData();
+                    setShowExportDropdown(false);
+                  }}
+                  className="w-full text-left px-4 py-3 hover:bg-emerald-50/60 flex items-center gap-3 transition-colors duration-200 rounded-b-xl"
+                >
+                  <Download className="w-5 h-5 text-emerald-500" />
+                  <span className="font-semibold text-gray-700">JSON File</span>
+                </button>
+              </div>
+            </>,
+            document.body
           )}
         </div>
       </div>

@@ -1,9 +1,22 @@
 import React, { useState, useRef } from 'react';
-import { Upload, Download, AlertTriangle, FileText, User, Mail, Trash2 } from 'lucide-react';
+import { Upload, Download, AlertTriangle, FileText, User, Mail, Trash2, RefreshCw } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth.jsx';
+import { isDemoUser, resetDemoData } from '../../services/demoService';
 
 const AdvancedSettings = ({ user }) => {
   const { deleteAccount } = useAuth();
+
+  const handleResetDemoData = async () => {
+    if (window.confirm('This will reset all demo data back to the original sample dataset. Are you sure?')) {
+      const result = await resetDemoData();
+      if (result.success) {
+        alert('Demo data reset successfully! Please refresh the page to see the changes.');
+        setTimeout(() => window.location.reload(), 1000);
+      } else {
+        alert('Error resetting demo data: ' + result.error);
+      }
+    }
+  };
   const fileInputRef = useRef(null);
   const [importStatus, setImportStatus] = useState('');
   const [showImportOptions, setShowImportOptions] = useState(false);
@@ -180,7 +193,14 @@ const AdvancedSettings = ({ user }) => {
                 </span>
               </div>
               <div>
-                <h4 className="font-semibold text-gray-900">{user.name}</h4>
+                <h4 className="font-semibold text-gray-900">
+                  {user.name}
+                  {isDemoUser(user.id) && (
+                    <span className="ml-2 bg-emerald-100 text-emerald-800 text-xs font-medium px-2 py-1 rounded-full">
+                      Demo User
+                    </span>
+                  )}
+                </h4>
                 <p className="text-gray-600 flex items-center gap-1">
                   <Mail className="w-4 h-4" />
                   {user.email}
@@ -191,6 +211,23 @@ const AdvancedSettings = ({ user }) => {
               <p>Account created: {new Date(user.createdAt).toLocaleDateString()}</p>
               <p>Last login: {new Date(user.lastLogin).toLocaleDateString()}</p>
             </div>
+
+            {/* Demo User Actions */}
+            {isDemoUser(user.id) && (
+              <div className="mt-4 p-3 bg-emerald-50 border border-emerald-200 rounded-lg">
+                <h4 className="text-emerald-800 font-medium mb-2">Demo User Options</h4>
+                <p className="text-emerald-700 text-sm mb-3">
+                  Reset your demo data to start fresh with the original sample dataset including 2 months of historical data.
+                </p>
+                <button
+                  onClick={handleResetDemoData}
+                  className="flex items-center gap-2 bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 transition-colors duration-200 text-sm font-medium"
+                >
+                  <RefreshCw className="w-4 h-4" />
+                  Reset Demo Data
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { Calendar, Mail, Lock, User, AlertTriangle, Eye, EyeOff } from 'lucide-react';
+import { Calendar, Mail, Lock, User, AlertTriangle, Eye, EyeOff, Play } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
+import { createDemoUser } from '../../services/demoService';
 
 const AuthScreen = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -13,8 +14,36 @@ const AuthScreen = () => {
   });
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
-  
+
   const { login, register } = useAuth();
+
+  const handleDemoLogin = async () => {
+    setIsLoading(true);
+    setErrors({});
+
+    try {
+      // Create demo user and data
+      const demoResult = await createDemoUser();
+      if (!demoResult.success) {
+        setErrors({ submit: demoResult.error });
+        return;
+      }
+
+      // Login as demo user
+      const loginResult = await login({
+        email: 'demo@medmindr.com',
+        password: 'demo123'
+      });
+
+      if (!loginResult.success) {
+        setErrors({ submit: loginResult.error });
+      }
+    } catch (error) {
+      setErrors({ submit: 'Failed to start demo' });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -60,7 +89,7 @@ const AuthScreen = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     const validationErrors = validateForm();
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
@@ -72,7 +101,7 @@ const AuthScreen = () => {
 
     try {
       let result;
-      
+
       if (isLogin) {
         result = await login({
           email: formData.email,
@@ -282,18 +311,34 @@ const AuthScreen = () => {
               onClick={toggleMode}
               className="text-blue-600 hover:text-blue-700 font-medium transition-colors"
             >
-              {isLogin 
-                ? "Don't have an account? Create one" 
+              {isLogin
+                ? "Don't have an account? Create one"
                 : 'Already have an account? Sign in'
               }
             </button>
           </div>
 
-          {/* Demo info */}
-          <div className="mt-6 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-            <p className="text-blue-700 text-sm">
-              <strong>Demo Mode:</strong> This is a local demo. Your data is stored locally and not sent to any server.
-            </p>
+          {/* Demo and Info */}
+          <div className="mt-6 space-y-4">
+            {/* Try Demo Button */}
+            <div className="text-center">
+              <div className="mb-3 text-sm text-gray-600">Want to explore first?</div>
+              <button
+                onClick={handleDemoLogin}
+                disabled={isLoading}
+                className="w-full bg-gradient-to-r from-emerald-500 to-teal-600 text-white py-3 px-4 rounded-xl hover:from-emerald-600 hover:to-teal-700 focus:ring-4 focus:ring-emerald-500/30 font-semibold transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-emerald-500/30 flex items-center justify-center gap-2"
+              >
+                <Play className="w-4 h-4" />
+                Try Demo with Sample Data
+              </button>
+            </div>
+
+            {/* Demo info */}
+            <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              <p className="text-blue-700 text-sm">
+                <strong>Local Storage:</strong> All data is stored locally in your browser. Nothing is sent to external servers.
+              </p>
+            </div>
           </div>
         </div>
       </div>

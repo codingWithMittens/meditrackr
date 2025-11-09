@@ -1,0 +1,183 @@
+/* Print Styles - Hide UI elements during printing */
+
+@media print {
+  /* Hide all non-print elements */
+  .no-print,
+  .no-print * {
+    display: none !important;
+  }
+  
+  /* Reset page styling for print */
+  @page {
+    margin: 0.75in;
+    size: letter;
+  }
+  
+  /* Reset body styling */
+  body {
+    background: white !important;
+    color: black !important;
+    font-size: 12pt !important;
+    line-height: 1.4 !important;
+  }
+  
+  /* Main container adjustments */
+  .max-w-6xl {
+    max-width: none !important;
+  }
+  
+  /* Hide page background */
+  .bg-gradient-to-br {
+    background: white !important;
+  }
+  
+  /* Remove shadows and effects */
+  .shadow-lg,
+  .shadow-xl,
+  .shadow-2xl,
+  .backdrop-blur-sm {
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+  }
+  
+  /* Remove rounded corners for print */
+  .rounded-lg,
+  .rounded-xl,
+  .rounded-2xl {
+    border-radius: 0 !important;
+  }
+  
+  /* Ensure white backgrounds */
+  .bg-white,
+  .bg-gray-50,
+  .bg-blue-50 {
+    background: white !important;
+  }
+  
+  /* Force black text */
+  h1, h2, h3, h4, h5, h6,
+  .text-gray-700,
+  .text-gray-800,
+  .text-gray-900 {
+    color: black !important;
+  }
+  
+  /* Keep important colors for status indicators */
+  .text-green-600,
+  .text-green-700,
+  .text-green-800 {
+    color: #059669 !important;
+  }
+  
+  .text-red-600,
+  .text-red-700,
+  .text-red-800 {
+    color: #dc2626 !important;
+  }
+  
+  .text-blue-600,
+  .text-blue-700,
+  .text-blue-800 {
+    color: #2563eb !important;
+  }
+  
+  .text-amber-600,
+  .text-amber-700,
+  .text-amber-800 {
+    color: #d97706 !important;
+  }
+  
+  /* Table styling for print */
+  table {
+    border-collapse: collapse !important;
+    width: 100% !important;
+    font-size: 10pt !important;
+  }
+  
+  th, td {
+    border: 1px solid black !important;
+    padding: 8px 6px !important;
+    text-align: left !important;
+    vertical-align: top !important;
+  }
+  
+  th {
+    background: #f3f4f6 !important;
+    font-weight: bold !important;
+    font-size: 10pt !important;
+  }
+  
+  /* Page breaks */
+  .page-break-before {
+    page-break-before: always !important;
+  }
+  
+  .page-break-after {
+    page-break-after: always !important;
+  }
+  
+  .page-break-inside-avoid {
+    page-break-inside: avoid !important;
+  }
+  
+  /* Specific medication table styling */
+  .medication-table tr {
+    page-break-inside: avoid !important;
+  }
+  
+  .medication-table th {
+    background: #e5e7eb !important;
+    border: 2px solid black !important;
+  }
+  
+  /* Historical view styling */
+  .historical-day {
+    page-break-inside: avoid !important;
+    margin-bottom: 20px !important;
+  }
+  
+  /* Status badges for print */
+  .bg-green-100 {
+    background: #dcfce7 !important;
+    border: 1px solid #16a34a !important;
+  }
+  
+  .bg-red-100 {
+    background: #fef2f2 !important;
+    border: 1px solid #dc2626 !important;
+  }
+  
+  .bg-blue-100 {
+    background: #dbeafe !important;
+    border: 1px solid #2563eb !important;
+  }
+  
+  .bg-amber-100 {
+    background: #fef3c7 !important;
+    border: 1px solid #d97706 !important;
+  }
+  
+  /* Remove hover effects and transitions */
+  * {
+    transition: none !important;
+    animation: none !important;
+  }
+  
+  *:hover {
+    transform: none !important;
+    box-shadow: none !important;
+  }
+  
+  /* Print-specific utility classes */
+  .print-text-sm {
+    font-size: 10pt !important;
+  }
+  
+  .print-text-xs {
+    font-size: 9pt !important;
+  }
+  
+  .print-font-bold {
+    font-weight: bold !important;
+  }
+}

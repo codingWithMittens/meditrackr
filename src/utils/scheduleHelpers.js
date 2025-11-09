@@ -6,7 +6,9 @@ export const getTimeString = (timeObj) => {
 
 export const isTaken = (med, date, time) => {
   const logEntry = `${date}-${time}`;
-  return med.takenLog && med.takenLog.includes(logEntry);
+  const result = med.takenLog && med.takenLog.includes(logEntry);
+
+  return result;
 };
 
 export const getSchedulesForDate = (med, date) => {

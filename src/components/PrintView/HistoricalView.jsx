@@ -156,7 +156,7 @@ const HistoricalView = ({ medications, dailyLogs }) => {
                   </div>
                 </div>
                 <div className="p-4">
-                  <table className="w-full border-collapse border border-gray-300">
+                  <table className="w-full border-collapse border border-gray-300 medication-table print-text-sm">
                     <thead>
                       <tr className="bg-gray-50">
                         <th className="border border-gray-300 px-3 py-2 text-left text-sm font-semibold">Date</th>
@@ -235,7 +235,7 @@ const HistoricalView = ({ medications, dailyLogs }) => {
                   {dailySchedules.length > 0 && (
                     <div className="mb-6">
                       <h4 className="font-semibold text-gray-700 mb-3">Medications</h4>
-                      <table className="w-full border-collapse border border-gray-300">
+                      <table className="w-full border-collapse border border-gray-300 medication-table print-text-sm">
                         <thead>
                           <tr className="bg-gray-50">
                             <th className="border border-gray-300 px-3 py-2 text-left text-sm font-semibold">Medication</th>

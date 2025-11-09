@@ -1,6 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import { Calendar, Settings, AlertCircle, Clock, MapPin, User, Wrench, LogOut } from 'lucide-react';
+import { Calendar, Settings, AlertCircle, Clock, MapPin, User, Wrench, LogOut, PlayCircle } from 'lucide-react';
 
 const Header = ({
   currentView,
@@ -9,18 +9,28 @@ const Header = ({
   showSettingsMenu,
   setShowSettingsMenu,
   user,
-  onLogout
+  onLogout,
+  onStartTour
 }) => {
+  const handleTitleClick = () => {
+    setCurrentView('calendar');
+    // Close any open menus
+    setShowSettingsMenu(false);
+  };
     return (
-    <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/50 p-4 sm:p-6 mb-6">
+    <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/50 p-4 sm:p-6 mb-6 no-print">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        {/* Title and Logo */}
-        <div className="flex items-center gap-3">
+        {/* Title and Logo - Clickable Home Link */}
+        <button
+          onClick={handleTitleClick}
+          className="flex items-center gap-3 calendar-header hover:scale-105 transition-transform duration-200 cursor-pointer"
+          title="Back to Calendar"
+        >
           <div className="bg-gradient-to-br from-blue-500 to-teal-600 p-2.5 sm:p-3 rounded-2xl shadow-lg">
             <Calendar className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
           </div>
           <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-gray-800 to-teal-700 bg-clip-text text-transparent">MedMindr</h1>
-        </div>
+        </button>
 
         {/* Navigation and Settings */}
         <div className="flex items-center justify-end gap-3">
@@ -30,7 +40,7 @@ const Header = ({
             <div className="relative">
               <button
                 onClick={() => setShowSettingsMenu(!showSettingsMenu)}
-                className="flex items-center gap-2 bg-white/70 text-gray-700 px-3 py-2 rounded-xl hover:bg-white/80 hover:shadow-md border border-gray-200/50 transition-all duration-200"
+                className="flex items-center gap-2 bg-white/70 text-gray-700 px-3 py-2 rounded-xl hover:bg-white/80 hover:shadow-md border border-gray-200/50 transition-all duration-200 user-menu"
                 title="Settings & Account"
               >
                 <div className="w-6 h-6 bg-gradient-to-br from-blue-500 to-teal-600 rounded-full flex items-center justify-center">
@@ -77,7 +87,7 @@ const Header = ({
                         setCurrentView('pharmacies');
                         setShowSettingsMenu(false);
                       }}
-                      className="w-full text-left px-4 py-3 hover:bg-emerald-50/60 flex items-center gap-3 border-b border-gray-100/50 transition-colors duration-200"
+                      className="w-full text-left px-4 py-3 hover:bg-emerald-50/60 flex items-center gap-3 border-b border-gray-100/50 transition-colors duration-200 settings-pharmacies"
                     >
                       <MapPin className="w-5 h-5 text-emerald-600" />
                       <span className="font-semibold text-gray-700">Pharmacies</span>
@@ -87,7 +97,7 @@ const Header = ({
                         setCurrentView('providers');
                         setShowSettingsMenu(false);
                       }}
-                      className="w-full text-left px-4 py-3 hover:bg-violet-50/60 flex items-center gap-3 border-b border-gray-100/50 transition-colors duration-200"
+                      className="w-full text-left px-4 py-3 hover:bg-violet-50/60 flex items-center gap-3 border-b border-gray-100/50 transition-colors duration-200 settings-providers"
                     >
                       <User className="w-5 h-5 text-violet-600" />
                       <span className="font-semibold text-gray-700">Providers</span>
@@ -101,6 +111,21 @@ const Header = ({
                     >
                       <Wrench className="w-5 h-5 text-amber-600" />
                       <span className="font-semibold text-gray-700">Account</span>
+                    </button>
+                    <button
+                      onClick={() => {
+                        console.log('Features Tour clicked');
+                        setShowSettingsMenu(false);
+                        setCurrentView('calendar'); // Ensure we're on calendar for tour
+                        setTimeout(() => {
+                          console.log('Calling onStartTour');
+                          onStartTour();
+                        }, 100);
+                      }}
+                      className="w-full text-left px-4 py-3 hover:bg-green-50/60 flex items-center gap-3 border-b border-gray-100/50 transition-colors duration-200"
+                    >
+                      <PlayCircle className="w-5 h-5 text-green-600" />
+                      <span className="font-semibold text-gray-700">Features Tour</span>
                     </button>
                     <button
                       onClick={() => {

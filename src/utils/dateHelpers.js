@@ -1,5 +1,14 @@
 export const formatDate = (date) => {
-  return date.toISOString().split('T')[0];
+  // Use local timezone instead of UTC to avoid timezone issues
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+// Helper to get today's date in local timezone
+export const getTodayString = () => {
+  return formatDate(new Date());
 };
 
 export const getDaysInMonth = (date) => {
@@ -11,8 +20,26 @@ export const getDaysInMonth = (date) => {
   const startingDayOfWeek = firstDay.getDay();
 
   const days = [];
-  for (let i = 0; i < startingDayOfWeek; i++) days.push(null);
-  for (let i = 1; i <= daysInMonth; i++) days.push(new Date(year, month, i));
+
+  // Add previous month days to fill the first week
+  const prevMonth = new Date(year, month - 1, 0); // Last day of previous month
+  const prevMonthDays = prevMonth.getDate();
+  for (let i = startingDayOfWeek - 1; i >= 0; i--) {
+    days.push(new Date(year, month - 1, prevMonthDays - i));
+  }
+
+  // Add current month days
+  for (let i = 1; i <= daysInMonth; i++) {
+    days.push(new Date(year, month, i));
+  }
+
+  // Add next month days to fill the last week (total should be 42 days for 6 weeks)
+  const totalDays = days.length;
+  const remainingDays = 42 - totalDays;
+  for (let i = 1; i <= remainingDays; i++) {
+    days.push(new Date(year, month + 1, i));
+  }
+
   return days;
 };
 
@@ -59,7 +86,7 @@ export const getDateRangePreset = (preset) => {
   }
 
   return {
-    startDate: startDate.toISOString().split('T')[0],
-    endDate: today.toISOString().split('T')[0]
+    startDate: formatDate(startDate),
+    endDate: formatDate(today)
   };
 };

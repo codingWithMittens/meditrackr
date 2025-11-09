@@ -10,12 +10,17 @@ import PharmacySettings from './components/Settings/PharmacySettings.jsx';
 import ProviderSettings from './components/Settings/ProviderSettings.jsx';
 import AdvancedSettings from './components/Settings/AdvancedSettings.jsx';
 import AuthScreen from './components/Auth/AuthScreen.jsx';
+import Tour from './components/Tour/Tour.jsx';
+import './components/Tour/tour.css';
+import './styles/print.css';
+import { AuthProvider, useAuth } from './hooks/useAuth.jsx';
+import { useTour } from './hooks/useTour.jsx';
+import { tourSampleData } from './data/tourData.js';
 import { useMedications } from './hooks/useMedications.js';
 import { useTimePeriods } from './hooks/useTimePeriods.js';
 import { useDailyLogs } from './hooks/useDailyLogs.js';
 import { usePharmacies } from './hooks/usePharmacies.js';
 import { useProviders } from './hooks/useProviders.js';
-import { AuthProvider, useAuth } from './hooks/useAuth.jsx';
 
 function AppContent() {
   const { user, isAuthenticated, isLoading, logout } = useAuth();
@@ -37,6 +42,27 @@ function AppContent() {
     );
   }
 
+  // Show auth screen if not authenticated
+  if (!isAuthenticated) {
+    return <AuthScreen />;
+  }
+
+  return <AuthenticatedContent key={user?.id} user={user} logout={logout} />;
+}
+
+// Separate component for authenticated users to avoid hooks order issues
+function AuthenticatedContent({ user, logout }) {
+  const {
+    currentStep,
+    isActive,
+    hasCompletedTour,
+    nextStep,
+    prevStep,
+    completeTour,
+    skipTour,
+    resetTour
+  } = useTour();
+
   const { medications, addMedication, updateMedication, deleteMedication, toggleTaken } = useMedications(user?.id);
   const { timePeriods, updateTimePeriod, addTimePeriod, deleteTimePeriod } = useTimePeriods(user?.id);
   const { dailyLogs, updateDailyLog, getDailyLog } = useDailyLogs(user?.id);
@@ -44,17 +70,12 @@ function AppContent() {
   const { providers, addProvider, updateProvider, deleteProvider } = useProviders(user?.id);
 
   const [currentView, setCurrentView] = useState('calendar');
-
-  const handleNavigateToReports = () => {
-    setCurrentView('print');
-  };
-
-  const handleBackToCalendar = () => {
-    setCurrentView('calendar');
-  };
   const [showForm, setShowForm] = useState(false);
   const [editingMed, setEditingMed] = useState(null);
   const [showSettingsMenu, setShowSettingsMenu] = useState(false);
+
+  // Tour form prefill data
+  const [prefillData, setPrefillData] = useState(null);
 
   const handleSaveMedication = (formData) => {
     if (editingMed) {
@@ -64,6 +85,13 @@ function AppContent() {
     }
     setShowForm(false);
     setEditingMed(null);
+
+    // Advance tour if medication was added during tour
+    if (isActive && currentStep === 9) { // medication-form-guide step
+      setTimeout(() => {
+        nextStep();
+      }, 500);
+    }
   };
 
   const handleEditMedication = (med) => {
@@ -81,12 +109,66 @@ function AppContent() {
     setShowForm(true);
     setEditingMed(null);
     setCurrentView('calendar');
+
+    // Auto-prefill medication form if on tour step
+    if (isActive && currentStep === 8) {
+      setTimeout(() => {
+        const updatedMedication = {
+          ...tourSampleData.medication,
+          provider: providers.length > 0 ? providers[providers.length - 1].id : '',
+          pharmacy: pharmacies.length > 0 ? pharmacies[pharmacies.length - 1].id : ''
+        };
+        handlePrefillMedicationForm(updatedMedication);
+      }, 500);
+    }
   };
 
-  // Show auth screen if not authenticated
-  if (!isAuthenticated) {
-    return <AuthScreen />;
-  }
+  // Tour prefill functions
+  const handlePrefillMedicationForm = (data) => {
+    setPrefillData({ type: 'medication', data });
+  };
+
+  const handlePrefillPharmacyForm = (data) => {
+    setPrefillData({ type: 'pharmacy', data });
+  };
+
+  const handlePrefillProviderForm = (data) => {
+    setPrefillData({ type: 'provider', data });
+  };
+
+  const clearPrefillData = () => {
+    setPrefillData(null);
+  };
+
+  const handleNavigateToReports = () => {
+    setCurrentView('print');
+  };
+
+  const handleBackToCalendar = () => {
+    setCurrentView('calendar');
+  };
+
+  const handleNavigateToPharmacies = () => {
+    setCurrentView('pharmacies');
+
+    // Auto-prefill pharmacy form if on tour step
+    if (isActive && currentStep === 6) {
+      setTimeout(() => {
+        handlePrefillPharmacyForm(tourSampleData.pharmacy);
+      }, 500);
+    }
+  };
+
+  const handleNavigateToProviders = () => {
+    setCurrentView('providers');
+
+    // Auto-prefill provider form if on tour step
+    if (isActive && currentStep === 2) {
+      setTimeout(() => {
+        handlePrefillProviderForm(tourSampleData.provider);
+      }, 500);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-teal-50 p-4">
@@ -99,6 +181,7 @@ function AppContent() {
           setShowSettingsMenu={setShowSettingsMenu}
           user={user}
           onLogout={logout}
+          onStartTour={resetTour}
         />
 
         {showForm && (
@@ -109,6 +192,8 @@ function AppContent() {
             providers={providers}
             onSave={handleSaveMedication}
             onCancel={handleCancelForm}
+            prefillData={prefillData?.type === 'medication' ? prefillData.data : null}
+            onPrefillUsed={clearPrefillData}
           />
         )}
 
@@ -121,6 +206,7 @@ function AppContent() {
             updateDailyLog={updateDailyLog}
             getDailyLog={getDailyLog}
             onNavigateToReports={handleNavigateToReports}
+            userId={user?.id}
           />
         )}
 
@@ -145,19 +231,43 @@ function AppContent() {
         {!showForm && currentView === 'pharmacies' && (
           <PharmacySettings
             pharmacies={pharmacies}
-            onAdd={addPharmacy}
+            onAdd={(data) => {
+              addPharmacy(data);
+              // Advance tour if pharmacy was added during tour
+              if (isActive && currentStep === 7) {
+                setTimeout(() => {
+                  setCurrentView('calendar');
+                  nextStep();
+                }, 500);
+              }
+            }}
             onUpdate={updatePharmacy}
             onDelete={deletePharmacy}
             onSetDefault={setDefaultPharmacy}
+            onBackToCalendar={handleBackToCalendar}
+            prefillData={prefillData?.type === 'pharmacy' ? prefillData.data : null}
+            onPrefillUsed={clearPrefillData}
           />
         )}
 
         {!showForm && currentView === 'providers' && (
           <ProviderSettings
             providers={providers}
-            onAdd={addProvider}
+            onAdd={(data) => {
+              addProvider(data);
+              // Advance tour if provider was added during tour
+              if (isActive && currentStep === 3) {
+                setTimeout(() => {
+                  setCurrentView('calendar');
+                  nextStep();
+                }, 500);
+              }
+            }}
             onUpdate={updateProvider}
             onDelete={deleteProvider}
+            onBackToCalendar={handleBackToCalendar}
+            prefillData={prefillData?.type === 'provider' ? prefillData.data : null}
+            onPrefillUsed={clearPrefillData}
           />
         )}
 
@@ -175,8 +285,34 @@ function AppContent() {
             providers={providers}
             dailyLogs={dailyLogs}
             onBackToCalendar={handleBackToCalendar}
+            user={user}
           />
         )}
+
+        {/* Tour Component */}
+        <Tour
+          medications={medications}
+          pharmacies={pharmacies}
+          providers={providers}
+          onAddMedication={handleAddNew}
+          onNavigateToPharmacies={handleNavigateToPharmacies}
+          onNavigateToProviders={handleNavigateToProviders}
+          onNavigateToReports={handleNavigateToReports}
+          currentView={currentView}
+          setCurrentView={setCurrentView}
+          // Tour state props
+          currentStep={currentStep}
+          isActive={isActive}
+          hasCompletedTour={hasCompletedTour}
+          nextStep={nextStep}
+          prevStep={prevStep}
+          completeTour={completeTour}
+          skipTour={skipTour}
+          // Form prefill props
+          onPrefillMedicationForm={handlePrefillMedicationForm}
+          onPrefillPharmacyForm={handlePrefillPharmacyForm}
+          onPrefillProviderForm={handlePrefillProviderForm}
+        />
       </div>
     </div>
   );

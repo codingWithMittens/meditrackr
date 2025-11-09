@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, ArrowLeft, Home } from 'lucide-react';
 import FormFields from './FormFields';
 import TimeSlotManager from './TimeSlotManager';
 import { DAYS_OF_WEEK } from '../../constants/medications';
 
-const MedicationForm = ({ editingMed, timePeriods, pharmacies, providers, onSave, onCancel }) => {
+const MedicationForm = ({ editingMed, timePeriods, pharmacies, providers, onSave, onCancel, prefillData, onPrefillUsed }) => {
   const defaultPharmacy = pharmacies?.find(p => p.isDefault);
   const [formData, setFormData] = useState({
     name: '',
@@ -40,8 +40,12 @@ const MedicationForm = ({ editingMed, timePeriods, pharmacies, providers, onSave
         type: editingMed.type || 'rx',
         pharmacy: editingMed.pharmacy || defaultPharmacy?.id || ''
       });
+    } else if (prefillData) {
+      // Prefill with tour data
+      setFormData(prev => ({ ...prev, ...prefillData }));
+      onPrefillUsed?.(); // Clear prefill data after using it
     }
-  }, [editingMed, defaultPharmacy]);
+  }, [editingMed, defaultPharmacy, prefillData, onPrefillUsed]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -93,10 +97,21 @@ const MedicationForm = ({ editingMed, timePeriods, pharmacies, providers, onSave
   };
 
   return (
-    <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/50 p-6 mb-6">
-      <h2 className="text-2xl font-bold mb-4">
-        {editingMed ? 'Edit Medication' : 'Add New Medication'}
-      </h2>
+    <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/50 p-6 mb-6 medication-form">
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="text-2xl font-bold">
+          {editingMed ? 'Edit Medication' : 'Add New Medication'}
+        </h2>
+        <button
+          onClick={onCancel}
+          className="flex items-center gap-2 bg-white/70 text-gray-700 px-4 py-2 rounded-xl hover:bg-white hover:shadow-md border border-gray-200/50 transition-all duration-200"
+          title="Back to Calendar"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          <Home className="w-4 h-4" />
+          <span className="text-sm font-medium hidden sm:inline">Calendar</span>
+        </button>
+      </div>
       <div className="space-y-4">
         <FormFields
           formData={formData}
@@ -198,9 +213,10 @@ const MedicationForm = ({ editingMed, timePeriods, pharmacies, providers, onSave
           </button>
           <button
             onClick={onCancel}
-            className="bg-white/70 text-gray-700 px-6 py-3 rounded-xl hover:bg-white hover:shadow-md font-semibold border border-gray-200/50 transition-all duration-200"
+            className="bg-white/70 text-gray-700 px-6 py-3 rounded-xl hover:bg-white hover:shadow-md font-semibold border border-gray-200/50 transition-all duration-200 flex items-center gap-2"
           >
-            Cancel
+            <ArrowLeft className="w-4 h-4" />
+            Back to Calendar
           </button>
         </div>
       </div>
