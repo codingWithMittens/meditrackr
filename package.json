@@ -10,7 +10,8 @@
     "preview": "vite preview",
     "deploy:vercel": "npm run build && npx vercel --prod",
     "deploy:netlify": "npm run build && npx netlify deploy --prod --dir=dist",
-    "deploy:preview": "npm run build && npm run preview"
+    "deploy:preview": "npm run build && npm run preview",
+    "deploy:github": "npm run build && npx gh-pages -d dist"
   },
   "dependencies": {
     "lucide-react": "^0.546.0",
@@ -26,6 +27,7 @@
     "eslint": "^9.36.0",
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.22",
+    "gh-pages": "^6.3.0",
     "globals": "^16.4.0",
     "postcss": "^8.4.35",
     "tailwindcss": "^3.4.1",
