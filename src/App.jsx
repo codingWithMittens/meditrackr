@@ -13,6 +13,27 @@ import AuthScreen from './components/Auth/AuthScreen.jsx';
 import Tour from './components/Tour/Tour.jsx';
 import './components/Tour/tour.css';
 import './styles/print.css';
+
+// Add pulse animation styles
+const pulseStyles = `
+  @keyframes pulse {
+    0% {
+      box-shadow: 0 25px 50px -12px rgba(59, 130, 246, 0.5);
+    }
+    50% {
+      box-shadow: 0 25px 50px -12px rgba(59, 130, 246, 0.7), 0 0 0 0 rgba(59, 130, 246, 0.4);
+      transform: scale(1.02);
+    }
+    100% {
+      box-shadow: 0 25px 50px -12px rgba(59, 130, 246, 0.5);
+    }
+  }
+`;
+
+// Inject styles
+const styleSheet = document.createElement('style');
+styleSheet.textContent = pulseStyles;
+document.head.appendChild(styleSheet);
 import { AuthProvider, useAuth } from './hooks/useAuth.jsx';
 import { useTour } from './hooks/useTour.jsx';
 import { tourSampleData } from './data/tourData.js';
@@ -76,6 +97,26 @@ function AuthenticatedContent({ user, logout }) {
 
   // Tour form prefill data
   const [prefillData, setPrefillData] = useState(null);
+
+  // Demo data loading handler
+  React.useEffect(() => {
+    const handleLoadDemoData = async () => {
+      // Import demo data
+      try {
+        const { resetDemoData } = await import('./services/demoService');
+        const result = await resetDemoData();
+        if (result.success) {
+          // Refresh to show demo data
+          window.location.reload();
+        }
+      } catch (error) {
+        console.error('Failed to load demo data:', error);
+      }
+    };
+
+    window.addEventListener('loadDemoData', handleLoadDemoData);
+    return () => window.removeEventListener('loadDemoData', handleLoadDemoData);
+  }, []);
 
   const handleSaveMedication = (formData) => {
     if (editingMed) {

@@ -135,22 +135,87 @@ const Calendar = ({ medications, timePeriods, toggleTaken, onAddNew, updateDaily
 
   if (medications.length === 0) {
     return (
-      <div className="bg-white rounded-lg shadow-lg p-6">
-        <div className="text-center py-16">
-          <div className="bg-gradient-to-br from-blue-100 to-teal-100 w-24 h-24 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg">
-            <CalendarIcon className="w-12 h-12 text-blue-600" />
+      <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/50 overflow-hidden">
+        {/* Hero Header */}
+        <div className="bg-gradient-to-r from-blue-500 to-teal-600 text-white p-8 text-center">
+          <div className="bg-white/20 backdrop-blur-sm w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-xl">
+            <CalendarIcon className="w-10 h-10 text-white" />
           </div>
-          <h3 className="text-2xl font-bold text-gray-800 mb-3">No Medications Yet</h3>
-          <p className="text-gray-600 mb-6 max-w-md mx-auto">
-            Get started by adding your first medication to track your schedule and adherence
-          </p>
-          <button
-            onClick={onAddNew}
-            className="inline-flex items-center gap-2 bg-gradient-to-r from-blue-500 to-teal-600 text-white px-6 py-3 rounded-xl hover:from-blue-600 hover:to-teal-700 text-lg font-semibold shadow-lg shadow-blue-500/30 transition-all duration-200 hover:shadow-xl hover:shadow-blue-500/40 transform hover:scale-105 add-medication-btn"
-          >
-            <Plus className="w-6 h-6" />
-            Add Your First Medication
-          </button>
+          <h2 className="text-3xl font-bold mb-2">Welcome to MedMindr!</h2>
+          <p className="text-blue-100 text-lg">Your personal medication tracking companion</p>
+        </div>
+
+        {/* Main Content */}
+        <div className="p-8">
+          <div className="max-w-2xl mx-auto text-center">
+            <h3 className="text-2xl font-bold text-gray-800 mb-4">Let's Get Started</h3>
+            <p className="text-gray-600 text-lg mb-8 leading-relaxed">
+              Add your medications to start tracking your schedule, monitor adherence, and take control of your health journey.
+            </p>
+
+            {/* Primary CTA */}
+            <div className="mb-8">
+              <button
+                onClick={onAddNew}
+                className="inline-flex items-center gap-3 bg-gradient-to-r from-blue-500 to-teal-600 text-white px-8 py-4 rounded-2xl hover:from-blue-600 hover:to-teal-700 text-xl font-bold shadow-2xl shadow-blue-500/40 transition-all duration-300 hover:shadow-3xl hover:shadow-blue-500/50 transform hover:scale-105 hover:-translate-y-1 add-medication-btn pulse-animation"
+                style={{
+                  animation: 'pulse 2s infinite'
+                }}
+              >
+                <Plus className="w-7 h-7" />
+                Add Your First Medication
+              </button>
+            </div>
+
+            {/* Feature Preview */}
+            <div className="grid md:grid-cols-3 gap-6 mb-8">
+              <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-6 rounded-xl border border-blue-200/50">
+                <div className="bg-blue-500 w-12 h-12 rounded-xl flex items-center justify-center mx-auto mb-3 shadow-lg">
+                  <CalendarIcon className="w-6 h-6 text-white" />
+                </div>
+                <h4 className="font-semibold text-gray-800 mb-2">Smart Calendar</h4>
+                <p className="text-gray-600 text-sm">Visual tracking with daily, weekly & monthly views</p>
+              </div>
+
+              <div className="bg-gradient-to-br from-teal-50 to-teal-100 p-6 rounded-xl border border-teal-200/50">
+                <div className="bg-teal-500 w-12 h-12 rounded-xl flex items-center justify-center mx-auto mb-3 shadow-lg">
+                  <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
+                  </svg>
+                </div>
+                <h4 className="font-semibold text-gray-800 mb-2">Never Miss a Dose</h4>
+                <p className="text-gray-600 text-sm">Easy one-click marking & adherence tracking</p>
+              </div>
+
+              <div className="bg-gradient-to-br from-purple-50 to-purple-100 p-6 rounded-xl border border-purple-200/50">
+                <div className="bg-purple-500 w-12 h-12 rounded-xl flex items-center justify-center mx-auto mb-3 shadow-lg">
+                  <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clipRule="evenodd" />
+                  </svg>
+                </div>
+                <h4 className="font-semibold text-gray-800 mb-2">Health Insights</h4>
+                <p className="text-gray-600 text-sm">Track symptoms, mood & export reports</p>
+              </div>
+            </div>
+
+            {/* Secondary Options */}
+            <div className="border-t border-gray-200 pt-6">
+              <p className="text-gray-500 text-sm mb-4">Or explore with sample data first:</p>
+              <button
+                onClick={() => {
+                  // This would trigger loading demo data
+                  const event = new CustomEvent('loadDemoData');
+                  window.dispatchEvent(event);
+                }}
+                className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 font-medium text-sm transition-colors duration-200"
+              >
+                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-8.293l-3-3a1 1 0 00-1.414 0l-3 3a1 1 0 001.414 1.414L9 9.414V13a1 1 0 102 0V9.414l1.293 1.293a1 1 0 001.414-1.414z" clipRule="evenodd" />
+                </svg>
+                Try Demo Mode
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     );
