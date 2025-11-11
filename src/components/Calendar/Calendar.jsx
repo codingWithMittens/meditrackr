@@ -7,12 +7,34 @@ import CalendarDay from './CalendarDay';
 import DayModal from './DayModal';
 
 const Calendar = ({ medications, timePeriods, toggleTaken, onAddNew, updateDailyLog, getDailyLog, onNavigateToReports, userId }) => {
-  // Detect if mobile on mount
-  const isMobile = () => window.innerWidth < 768;
-  const [viewMode, setViewMode] = useState(isMobile() ? 'weekly' : 'monthly');
+  // Enhanced mobile detection with responsive updates
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
+  const [viewMode, setViewMode] = useState(() => window.innerWidth < 768 ? 'weekly' : 'monthly');
+
+  // Update mobile state on resize
+  useEffect(() => {
+    const handleResize = () => {
+      const mobile = window.innerWidth < 768;
+      setIsMobile(mobile);
+      // Auto-switch to weekly on mobile for better UX
+      if (mobile && viewMode === 'monthly') {
+        setViewMode('weekly');
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [viewMode]);
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [selectedDayModal, setSelectedDayModal] = useState(null);
   const [hoveredCard, setHoveredCard] = useState(null);
+
+  // Touch/swipe handling for mobile navigation
+  const [touchStart, setTouchStart] = useState(null);
+  const [touchEnd, setTouchEnd] = useState(null);
+
+  // Minimum swipe distance required
+  const minSwipeDistance = 50;
   // Track if we've shown the initial modal for this user session
   const [hasShownInitialModal, setHasShownInitialModal] = useState(() => {
     // Check if we've already shown the modal for this user today
@@ -75,6 +97,33 @@ const Calendar = ({ medications, timePeriods, toggleTaken, onAddNew, updateDaily
 
   const handleToggleTaken = (medId, date, time) => {
     toggleTaken(medId, date, time);
+  };
+
+  // Touch handlers for swipe navigation
+  const onTouchStart = (e) => {
+    setTouchEnd(null);
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const onTouchMove = (e) => {
+    setTouchEnd(e.targetTouches[0].clientX);
+  };
+
+  const onTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > minSwipeDistance;
+    const isRightSwipe = distance < -minSwipeDistance;
+
+    if (isLeftSwipe) {
+      // Swipe left = go forward
+      viewMode === 'weekly' ? changeWeek(1) : changeMonth(1);
+    }
+    if (isRightSwipe) {
+      // Swipe right = go back
+      viewMode === 'weekly' ? changeWeek(-1) : changeMonth(-1);
+    }
   };
 
   // Update modal when medications change
@@ -253,47 +302,55 @@ const Calendar = ({ medications, timePeriods, toggleTaken, onAddNew, updateDaily
         </div>
 
         {/* Navigation */}
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between mb-4 sm:mb-6">
           <button
             onClick={() => viewMode === 'weekly' ? changeWeek(-1) : changeMonth(-1)}
-            className="p-3 hover:bg-gray-100/70 rounded-xl transition-all duration-200 hover:shadow-sm border border-transparent hover:border-gray-200"
+            className={`${isMobile ? 'p-2' : 'p-3'} hover:bg-gray-100/70 rounded-xl transition-all duration-200 hover:shadow-sm border border-transparent hover:border-gray-200 touch-manipulation`}
           >
-            ←
+            <span className={`${isMobile ? 'text-lg' : 'text-xl'} font-bold`}>←</span>
           </button>
 
-          <div className="flex items-center gap-4">
-            <h2 className="text-2xl font-bold">
+          <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4 text-center">
+            <h2 className={`${isMobile ? 'text-lg' : 'text-2xl'} font-bold leading-tight`}>
               {viewMode === 'weekly'
                 ? getWeekDateRange()
-                : selectedDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+                : selectedDate.toLocaleDateString('en-US', {
+                    month: isMobile ? 'short' : 'long',
+                    year: 'numeric'
+                  })
               }
             </h2>
 
             {/* Reports/Export Button */}
             <button
               onClick={onNavigateToReports}
-              className="flex items-center gap-2 bg-white/70 text-gray-700 px-3 py-2 rounded-xl hover:bg-white hover:shadow-md border border-gray-200/50 transition-all duration-200 reports-btn"
+              className={`flex items-center gap-2 bg-white/70 text-gray-700 ${isMobile ? 'px-2 py-1.5' : 'px-3 py-2'} rounded-xl hover:bg-white hover:shadow-md border border-gray-200/50 transition-all duration-200 reports-btn touch-manipulation`}
               title="Reports & Export"
             >
-              <FileText className="w-4 h-4" />
-              <span className="text-sm font-medium hidden sm:inline">Reports</span>
+              <FileText className={`${isMobile ? 'w-3 h-3' : 'w-4 h-4'}`} />
+              <span className={`${isMobile ? 'text-xs' : 'text-sm'} font-medium ${isMobile ? '' : 'hidden sm:inline'}`}>
+                {isMobile ? 'Report' : 'Reports'}
+              </span>
             </button>
-
-
           </div>
 
           <button
             onClick={() => viewMode === 'weekly' ? changeWeek(1) : changeMonth(1)}
-            className="p-3 hover:bg-gray-100/70 rounded-xl transition-all duration-200 hover:shadow-sm border border-transparent hover:border-gray-200"
+            className={`${isMobile ? 'p-2' : 'p-3'} hover:bg-gray-100/70 rounded-xl transition-all duration-200 hover:shadow-sm border border-transparent hover:border-gray-200 touch-manipulation`}
           >
-            →
+            <span className={`${isMobile ? 'text-lg' : 'text-xl'} font-bold`}>→</span>
           </button>
         </div>
 
-        <div className="grid grid-cols-7 gap-2 calendar-grid">
+        <div
+          className={`grid grid-cols-7 ${isMobile ? 'gap-1' : 'gap-2'} calendar-grid`}
+          onTouchStart={isMobile ? onTouchStart : undefined}
+          onTouchMove={isMobile ? onTouchMove : undefined}
+          onTouchEnd={isMobile ? onTouchEnd : undefined}
+        >
           {DAYS_OF_WEEK_SHORT.map(day => (
-            <div key={day} className="text-center font-semibold text-gray-600 p-2">
-              {day}
+            <div key={day} className={`text-center font-semibold text-gray-600 ${isMobile ? 'p-1 text-xs' : 'p-2 text-sm'}`}>
+              {isMobile ? day.slice(0, 1) : day}
             </div>
           ))}
 

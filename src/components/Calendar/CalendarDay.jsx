@@ -16,6 +16,13 @@ const CalendarDay = ({
   isCurrentMonth = true,
   getDailyLog
 }) => {
+  const [isMobile, setIsMobile] = React.useState(() => window.innerWidth < 768);
+
+  React.useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
   const groupedByTime = groupSchedulesByTime(schedulesForDay);
   const timeGroups = Object.values(groupedByTime).sort((a, b) => {
     // As-needed medications should always come last
@@ -72,7 +79,7 @@ const CalendarDay = ({
 
   return (
     <div
-      className={`min-h-24 p-3 border rounded-xl relative transition-all duration-200 ${
+      className={`${isMobile ? 'min-h-16 p-1.5' : 'min-h-24 p-3'} border ${isMobile ? 'rounded-lg' : 'rounded-xl'} relative transition-all duration-200 ${
         isToday ? 'bg-gradient-to-br from-blue-50 to-teal-50 border-blue-300 shadow-md calendar-day-today' : 'border-gray-200/60 bg-white/50'
       } ${isClickable ? 'hover:bg-white/80 hover:shadow-lg hover:border-blue-200 cursor-pointer' : ''} ${
         !isCurrentMonth ? 'opacity-60 hover:opacity-90' : ''
@@ -84,26 +91,26 @@ const CalendarDay = ({
           <Check className="w-3 h-3 text-white" />
         </div>
       )}
-      <div className="flex items-center justify-between mb-1">
-        <div className="font-semibold text-sm">{day.getDate()}</div>
+      <div className={`flex items-center justify-between ${isMobile ? 'mb-0.5' : 'mb-1'}`}>
+        <div className={`font-semibold ${isMobile ? 'text-xs' : 'text-sm'}`}>{day.getDate()}</div>
         {/* Daily Log Indicators with clear differentiation */}
-        <div className={`flex gap-1 items-center ${allDayTaken ? 'mr-8' : ''}`}>
+        <div className={`flex ${isMobile ? 'gap-0.5' : 'gap-1'} items-center ${allDayTaken ? (isMobile ? 'mr-5' : 'mr-8') : ''}`}>
           {dailyLog.pain !== null && (
             <div
-              className="bg-red-50 px-1.5 py-0.5 rounded-md border border-red-200/50"
+              className={`bg-red-50 ${isMobile ? 'px-1 py-0.5' : 'px-1.5 py-0.5'} rounded-md border border-red-200/50`}
               title={`Pain Level: ${getPainLabel(dailyLog.pain)}`}
             >
-              <span className="text-xs leading-none">
+              <span className={`${isMobile ? 'text-[10px]' : 'text-xs'} leading-none`}>
                 {getPainIcon(dailyLog.pain)}
               </span>
             </div>
           )}
           {dailyLog.emotions !== null && (
             <div
-              className="bg-blue-50 px-1.5 py-0.5 rounded-md border border-blue-200/50"
+              className={`bg-blue-50 ${isMobile ? 'px-1 py-0.5' : 'px-1.5 py-0.5'} rounded-md border border-blue-200/50`}
               title={`Emotional Well-being: ${getEmotionLabel(dailyLog.emotions)}`}
             >
-              <span className="text-xs leading-none">
+              <span className={`${isMobile ? 'text-[10px]' : 'text-xs'} leading-none`}>
                 {getEmotionIcon(dailyLog.emotions)}
               </span>
             </div>
@@ -112,27 +119,27 @@ const CalendarDay = ({
       </div>
       {/* Show as-needed medications indicator */}
       {!hasSchedules && hasAsNeeded && (
-        <div className="text-center py-1">
-          <div className="text-xs text-purple-600 font-medium bg-purple-50 px-2 py-1 rounded-lg border border-purple-200">
-            As-needed available
+        <div className={`text-center ${isMobile ? 'py-0.5' : 'py-1'}`}>
+          <div className={`${isMobile ? 'text-[10px]' : 'text-xs'} text-purple-600 font-medium bg-purple-50 ${isMobile ? 'px-1 py-0.5' : 'px-2 py-1'} rounded-lg border border-purple-200`}>
+            {isMobile ? 'As-needed' : 'As-needed available'}
           </div>
         </div>
       )}
 
       {!hasSchedules && !hasAsNeeded && isToday && (
-        <div className="text-center py-2">
+        <div className={`text-center ${isMobile ? 'py-1' : 'py-2'}`}>
           <button
             onClick={(e) => {
               e.stopPropagation();
               onAddNew();
             }}
-            className="text-xs text-blue-600 hover:text-blue-800 hover:underline font-medium transition-colors duration-200"
+            className={`${isMobile ? 'text-[10px]' : 'text-xs'} text-blue-600 hover:text-blue-800 hover:underline font-medium transition-colors duration-200 touch-manipulation`}
           >
-            Add medication
+            {isMobile ? 'Add med' : 'Add medication'}
           </button>
         </div>
       )}
-      <div className="space-y-1">
+      <div className={`${isMobile ? 'space-y-0.5' : 'space-y-1'}`}>
         {timeGroups.map((group) => {
           // For time blocks, consider all medications in the group
           const allGroupMeds = group.medications;
@@ -164,9 +171,9 @@ const CalendarDay = ({
           return (
             <div
               key={group.time}
-              className={`text-xs p-2 rounded-lg border relative overflow-hidden shadow-sm transition-all duration-200 hover:shadow-md ${colorClass}`}
-              onMouseEnter={() => setHoveredCard(`${dateStr}-${group.time}`)}
-              onMouseLeave={() => setHoveredCard(null)}
+              className={`${isMobile ? 'text-[10px] p-1' : 'text-xs p-2'} ${isMobile ? 'rounded-md' : 'rounded-lg'} border relative overflow-hidden shadow-sm transition-all duration-200 hover:shadow-md ${colorClass} touch-manipulation`}
+              onMouseEnter={() => !isMobile && setHoveredCard(`${dateStr}-${group.time}`)}
+              onMouseLeave={() => !isMobile && setHoveredCard(null)}
             >
               {displaySomeTaken && totalCount > 0 && (
                 <div
@@ -176,19 +183,19 @@ const CalendarDay = ({
               )}
 
               {displayAllTaken && totalCount > 0 && (
-                <div className="absolute top-1 right-1">
-                  <div className={`rounded-full p-0.5 shadow-sm ${
+                <div className={`absolute ${isMobile ? 'top-0.5 right-0.5' : 'top-1 right-1'}`}>
+                  <div className={`rounded-full ${isMobile ? 'p-0.5' : 'p-0.5'} shadow-sm ${
                     hasScheduled
                       ? 'bg-gradient-to-br from-emerald-500 to-emerald-600'
                       : 'bg-gradient-to-br from-purple-500 to-purple-600'
                   }`}>
-                    <Check className="w-2.5 h-2.5 text-white" />
+                    <Check className={`${isMobile ? 'w-2 h-2' : 'w-2.5 h-2.5'} text-white`} />
                   </div>
                 </div>
               )}
 
               {displaySomeTaken && !displayAllTaken && (
-                <div className={`absolute top-1 right-1 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full shadow-sm ${
+                <div className={`absolute ${isMobile ? 'top-0.5 right-0.5' : 'top-1 right-1'} text-white ${isMobile ? 'text-[8px]' : 'text-[9px]'} font-bold ${isMobile ? 'px-1 py-0.5' : 'px-1.5 py-0.5'} rounded-full shadow-sm ${
                   hasScheduled
                     ? 'bg-gradient-to-r from-amber-400 to-amber-500'
                     : 'bg-gradient-to-r from-purple-400 to-purple-500'
@@ -197,19 +204,29 @@ const CalendarDay = ({
                 </div>
               )}
 
-              <div className="flex items-start justify-between gap-1 relative z-10">
+              <div className={`flex items-start justify-between ${isMobile ? 'gap-0.5' : 'gap-1'} relative z-10`}>
                 <div className="flex-1 min-w-0">
-                  <div className="font-semibold truncate">
-                    {displayLabel || group.time}
+                  <div className={`font-semibold truncate ${isMobile ? 'text-[10px]' : ''}`}>
+                    {isMobile ?
+                      (displayLabel ? displayLabel.slice(0, 3) : group.time.slice(0, 5)) :
+                      (displayLabel || group.time)
+                    }
                   </div>
-                  <div className="text-xs opacity-75 truncate">
-                    {group.medications.length} med{group.medications.length !== 1 ? 's' : ''}
-                    {asNeededInGroup.length > 0 && (
-                      <span className="text-purple-600 font-medium">
-                        {scheduledMeds.length > 0 ? ' + as-needed' : ' as-needed'}
-                      </span>
-                    )}
-                  </div>
+                  {!isMobile && (
+                    <div className="text-xs opacity-75 truncate">
+                      {group.medications.length} med{group.medications.length !== 1 ? 's' : ''}
+                      {asNeededInGroup.length > 0 && (
+                        <span className="text-purple-600 font-medium">
+                          {scheduledMeds.length > 0 ? ' + as-needed' : ' as-needed'}
+                        </span>
+                      )}
+                    </div>
+                  )}
+                  {isMobile && (
+                    <div className="text-[8px] opacity-75 truncate">
+                      {group.medications.length}med{asNeededInGroup.length > 0 ? '+' : ''}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
