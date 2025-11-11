@@ -2,11 +2,48 @@ import React, { useState } from 'react';
 import { AlertCircle } from 'lucide-react';
 import { COMMON_MEDICATIONS } from '../../constants/medications';
 
+// Common suggestions for various fields
+const NOTES_SUGGESTIONS = [
+  "Take with food",
+  "Take on empty stomach",
+  "Take with plenty of water",
+  "Take at bedtime",
+  "Monitor blood pressure",
+  "Avoid alcohol",
+  "Avoid grapefruit juice",
+  "Take same time each day",
+  "Do not crush or chew",
+  "May cause drowsiness",
+  "Take with breakfast",
+  "Refrigerate after opening"
+];
+
+const INDICATION_SUGGESTIONS = [
+  "High Blood Pressure",
+  "Type 2 Diabetes",
+  "High Cholesterol",
+  "Depression",
+  "Anxiety",
+  "Acid Reflux",
+  "Arthritis",
+  "Asthma",
+  "Heart Disease",
+  "Thyroid Condition",
+  "Pain Relief",
+  "Allergy Relief",
+  "Sleep Aid",
+  "Vitamin Deficiency"
+];
+
 const FormFields = ({ formData, formErrors, onChange, onUpdateFormData, pharmacies, providers }) => {
   const [nameSuggestions, setNameSuggestions] = useState([]);
   const [genericSuggestions, setGenericSuggestions] = useState([]);
+  const [notesSuggestions, setNotesSuggestions] = useState([]);
+  const [indicationSuggestions, setIndicationSuggestions] = useState([]);
   const [showNameDropdown, setShowNameDropdown] = useState(false);
   const [showGenericDropdown, setShowGenericDropdown] = useState(false);
+  const [showNotesDropdown, setShowNotesDropdown] = useState(false);
+  const [showIndicationDropdown, setShowIndicationDropdown] = useState(false);
 
 
 
@@ -50,6 +87,26 @@ const FormFields = ({ formData, formErrors, onChange, onUpdateFormData, pharmaci
     setShowGenericDropdown(false);
   };
 
+  const handleIndicationChange = (e) => {
+    const value = e.target.value;
+    onChange(e);
+
+    if (value.length > 0) {
+      const filtered = INDICATION_SUGGESTIONS.filter(indication =>
+        indication.toLowerCase().includes(value.toLowerCase())
+      ).slice(0, 8);
+      setIndicationSuggestions(filtered);
+      setShowIndicationDropdown(true);
+    } else {
+      setShowIndicationDropdown(false);
+    }
+  };
+
+  const selectIndication = (indication) => {
+    onUpdateFormData(prev => ({ ...prev, indication }));
+    setShowIndicationDropdown(false);
+  };
+
 
 
   return (
@@ -68,6 +125,7 @@ const FormFields = ({ formData, formErrors, onChange, onUpdateFormData, pharmaci
           className={`w-full p-2 border rounded ${formErrors.name ? 'border-red-500' : ''}`}
           placeholder="e.g., Lipitor"
           autoComplete="off"
+          tabIndex={1}
         />
         {formErrors.name && (
           <p className="text-red-500 text-sm mt-1 flex items-center gap-1">
@@ -103,6 +161,7 @@ const FormFields = ({ formData, formErrors, onChange, onUpdateFormData, pharmaci
           className="w-full p-2 border rounded"
           placeholder="e.g., Atorvastatin"
           autoComplete="off"
+          tabIndex={2}
         />
         {showGenericDropdown && genericSuggestions.length > 0 && (
           <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
@@ -131,6 +190,7 @@ const FormFields = ({ formData, formErrors, onChange, onUpdateFormData, pharmaci
           onChange={onChange}
           className={`w-full p-2 border rounded ${formErrors.dosage ? 'border-red-500' : ''}`}
           placeholder="e.g., 100mg"
+          tabIndex={3}
         />
         {formErrors.dosage && (
           <p className="text-red-500 text-sm mt-1 flex items-center gap-1">
@@ -147,6 +207,7 @@ const FormFields = ({ formData, formErrors, onChange, onUpdateFormData, pharmaci
           value={formData.frequency}
           onChange={onChange}
           className="w-full p-2 border rounded"
+          tabIndex={4}
         >
           <option value="daily">Daily</option>
           <option value="weekly">Weekly</option>
@@ -154,16 +215,33 @@ const FormFields = ({ formData, formErrors, onChange, onUpdateFormData, pharmaci
         </select>
       </div>
 
-      <div>
+      <div className="relative">
         <label className="block text-sm font-medium mb-1">Indication</label>
         <input
           type="text"
           name="indication"
           value={formData.indication || ''}
-          onChange={onChange}
+          onChange={handleIndicationChange}
+          onFocus={() => formData.indication && setShowIndicationDropdown(true)}
+          onBlur={() => setTimeout(() => setShowIndicationDropdown(false), 200)}
           className="w-full p-2 border rounded"
           placeholder="e.g., High blood pressure"
+          tabIndex={5}
+          autoComplete="off"
         />
+        {showIndicationDropdown && indicationSuggestions.length > 0 && (
+          <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+            {indicationSuggestions.map((indication, idx) => (
+              <div
+                key={idx}
+                onClick={() => selectIndication(indication)}
+                className="px-4 py-2 hover:bg-blue-50 cursor-pointer border-b border-gray-100 last:border-b-0"
+              >
+                <div className="font-medium text-gray-900">{indication}</div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       <div>
@@ -173,6 +251,7 @@ const FormFields = ({ formData, formErrors, onChange, onUpdateFormData, pharmaci
           value={formData.provider || ''}
           onChange={onChange}
           className="w-full p-2 border border-gray-300 rounded"
+          tabIndex={6}
         >
           <option value="">Select a provider</option>
           {providers && providers.map(provider => (

@@ -10,13 +10,16 @@ const TimeSlotManager = ({ times, timePeriods, onChange }) => {
       } else if (value === 'as-needed') {
         newTimes[index] = { label: 'As Needed', time: '', isCustom: false, asNeeded: true, instructions: '' };
       } else {
-        const preset = timePeriods.find(p => p.name === value);
-        newTimes[index] = { label: preset.name, time: preset.time, isCustom: false, asNeeded: false };
+        const preset = timePeriods.find(p => p.id === value || p.label === value);
+        newTimes[index] = { label: preset.label, time: preset.time, isCustom: false, asNeeded: false };
       }
     } else if (field === 'time') {
-      newTimes[index].time = value;
+      // Keep the original label when time is changed
+      newTimes[index] = { ...newTimes[index], time: value };
     } else if (field === 'instructions') {
       newTimes[index].instructions = value;
+    } else if (field === 'label') {
+      newTimes[index].label = value;
     }
     onChange(newTimes);
   };
@@ -36,28 +39,54 @@ const TimeSlotManager = ({ times, timePeriods, onChange }) => {
       <label className="block text-sm font-medium mb-1">Times to Take</label>
       {times.map((timeObj, index) => (
         <div key={index} className="mb-3">
-          <div className="flex gap-2 mb-2">
-            <select
-              value={timeObj.asNeeded ? 'as-needed' : (timeObj.isCustom ? 'custom' : timeObj.label)}
-              onChange={(e) => handleTimeChange(index, 'preset', e.target.value)}
-              className="flex-1 p-2 border rounded"
-            >
-              {timePeriods.map(period => (
-                <option key={period.id} value={period.name}>
-                  {period.name} ({period.time})
-                </option>
-              ))}
-              <option value="custom">Custom</option>
-              <option value="as-needed">As Needed</option>
-            </select>
-            {timeObj.isCustom && !timeObj.asNeeded && (
+          <div className="flex gap-2 mb-2 items-end">
+            {/* Label Input */}
+            <div className="flex-1">
+              <label className="block text-xs text-gray-600 mb-1">Label</label>
+              <input
+                type="text"
+                value={timeObj.label}
+                onChange={(e) => handleTimeChange(index, 'label', e.target.value)}
+                className="w-full p-2 border rounded"
+                placeholder="e.g., Morning"
+              />
+            </div>
+
+            {/* Time Input */}
+            <div className="flex-1">
+              <label className="block text-xs text-gray-600 mb-1">Time</label>
               <input
                 type="time"
                 value={timeObj.time}
                 onChange={(e) => handleTimeChange(index, 'time', e.target.value)}
-                className="flex-1 p-2 border rounded"
+                className="w-full p-2 border rounded"
               />
-            )}
+            </div>
+
+            {/* Preset Quick Select */}
+            <div className="flex-1">
+              <label className="block text-xs text-gray-600 mb-1">Quick Select</label>
+              <select
+                value=""
+                onChange={(e) => {
+                  if (e.target.value) {
+                    const period = timePeriods.find(p => p.id === e.target.value);
+                    if (period) {
+                      handleTimeChange(index, 'time', period.time);
+                      handleTimeChange(index, 'label', period.label);
+                    }
+                  }
+                }}
+                className="w-full p-2 border rounded text-sm"
+              >
+                <option value="">Choose preset...</option>
+                {timePeriods.map(period => (
+                  <option key={period.id} value={period.id}>
+                    {period.label} ({period.time})
+                  </option>
+                ))}
+              </select>
+            </div>
             {times.length > 1 && (
               <button
                 onClick={() => removeTimeSlot(index)}

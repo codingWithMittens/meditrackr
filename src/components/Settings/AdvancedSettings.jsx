@@ -98,7 +98,13 @@ const AdvancedSettings = ({ user }) => {
 
         // Confirm before overwriting
         const confirmed = window.confirm(
-          'This will replace all your current data. Are you sure you want to continue?'
+          'IMPORTANT: This will permanently replace ALL your current data including:\n\n' +
+          '• All medications and schedules\n' +
+          '• Daily logs and notes\n' +
+          '• Providers and pharmacies\n' +
+          '• Time periods and settings\n\n' +
+          'This action CANNOT be undone. Make sure you have exported a backup of your current data.\n\n' +
+          'Are you sure you want to continue?'
         );
 
         if (confirmed) {
@@ -143,7 +149,13 @@ const AdvancedSettings = ({ user }) => {
 
       // Confirm before overwriting
       const confirmed = window.confirm(
-        'This will replace all your current data. Are you sure you want to continue?'
+        'IMPORTANT: This will permanently replace ALL your current data including:\n\n' +
+        '• All medications and schedules\n' +
+        '• Daily logs and notes\n' +
+        '• Providers and pharmacies\n' +
+        '• Time periods and settings\n\n' +
+        'This action CANNOT be undone. Make sure you have exported a backup of your current data.\n\n' +
+        'Are you sure you want to continue?'
       );
 
       if (confirmed) {
@@ -232,18 +244,7 @@ const AdvancedSettings = ({ user }) => {
         </div>
       )}
 
-      {/* Warning Notice */}
-      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
-        <div className="flex items-start gap-3">
-          <AlertTriangle className="w-5 h-5 text-yellow-600 mt-0.5 flex-shrink-0" />
-          <div>
-            <h3 className="text-yellow-800 font-medium">Important Notice</h3>
-            <p className="text-yellow-700 text-sm mt-1">
-              Import features will replace your current data. Always export your data first as a backup before importing.
-            </p>
-          </div>
-        </div>
-      </div>
+
 
       {/* Export Section */}
       <div className="mb-8 p-4 bg-gray-50 rounded-lg">
@@ -266,38 +267,30 @@ const AdvancedSettings = ({ user }) => {
       {/* Danger Zone */}
       <div className="mb-8 p-4 bg-red-50 border border-red-200 rounded-lg">
         <h3 className="text-lg font-semibold mb-3 flex items-center gap-2 text-red-700">
-          <Trash2 className="w-5 h-5" />
+          <AlertTriangle className="w-5 h-5" />
           Danger Zone
         </h3>
-        <p className="text-red-600 text-sm mb-4">
-          Permanently delete your account and all associated data. This action cannot be undone.
-        </p>
-        <button
-          onClick={handleDeleteAccount}
-          className="flex items-center gap-2 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors duration-200"
-        >
-          <Trash2 className="w-4 h-4" />
-          Delete Account
-        </button>
-      </div>
-
-      {/* Import Section */}
-      <div className="p-4 bg-gray-50 rounded-lg">
-        <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
-          <Upload className="w-5 h-5 text-purple-500" />
-          Import Data
-        </h3>
-        <p className="text-gray-600 text-sm mb-4">
-          Import data from a previously exported MedMindr JSON file or paste JSON data directly. This will replace your current data.
+        <p className="text-red-600 text-sm mb-6">
+          These operations can permanently modify or delete your data. Use with caution.
         </p>
 
-        <button
-          onClick={() => setShowImportOptions(!showImportOptions)}
-          className="flex items-center gap-2 bg-purple-500 text-white px-4 py-2 rounded-lg hover:bg-purple-600 mb-4"
-        >
-          <Upload className="w-4 h-4" />
-          {showImportOptions ? 'Hide Import Options' : 'Show Import Options'}
-        </button>
+        {/* Import Data Section */}
+        <div className="mb-6 p-4 bg-white border border-red-200 rounded-lg">
+          <h4 className="text-md font-semibold mb-2 flex items-center gap-2">
+            <Upload className="w-5 h-5 text-orange-600" />
+            Import Data
+          </h4>
+          <p className="text-gray-700 text-sm mb-4">
+            Import data from a previously exported MedMindr JSON file or paste JSON data directly.
+          </p>
+
+          <button
+            onClick={() => setShowImportOptions(!showImportOptions)}
+            className="flex items-center gap-2 bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 mb-4"
+          >
+            <Upload className="w-4 h-4" />
+            {showImportOptions ? 'Hide Import Options' : 'Show Import Options'}
+          </button>
 
         <input
           ref={fileInputRef}
@@ -365,6 +358,25 @@ const AdvancedSettings = ({ user }) => {
             )}
           </div>
         )}
+        </div>
+
+        {/* Delete Account Section */}
+        <div className="p-4 bg-white border border-red-200 rounded-lg">
+          <h4 className="text-md font-semibold mb-2 flex items-center gap-2">
+            <Trash2 className="w-5 h-5 text-red-600" />
+            Delete Account
+          </h4>
+          <p className="text-gray-700 text-sm mb-4">
+            Permanently delete your account and all associated data.
+          </p>
+          <button
+            onClick={handleDeleteAccount}
+            className="flex items-center gap-2 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors duration-200"
+          >
+            <Trash2 className="w-4 h-4" />
+            Delete Account
+          </button>
+        </div>
       </div>
 
       {importStatus && (

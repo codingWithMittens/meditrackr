@@ -4,6 +4,25 @@ import FormFields from './FormFields';
 import TimeSlotManager from './TimeSlotManager';
 import { DAYS_OF_WEEK } from '../../constants/medications';
 
+// Common notes suggestions
+const NOTES_SUGGESTIONS = [
+  "Take with food to reduce stomach upset",
+  "Take on empty stomach for better absorption",
+  "Take with plenty of water",
+  "Take at bedtime to minimize side effects",
+  "Monitor blood pressure regularly",
+  "Avoid alcohol while taking this medication",
+  "Avoid grapefruit juice - may increase side effects",
+  "Take at the same time each day",
+  "Do not crush, chew, or break tablets",
+  "May cause drowsiness - avoid driving",
+  "Take with breakfast for better absorption",
+  "Store in refrigerator after opening",
+  "For pain relief - maximum 3 times per day",
+  "Take with food if stomach upset occurs",
+  "Complete full course even if feeling better"
+];
+
 const MedicationForm = ({ editingMed, timePeriods, pharmacies, providers, onSave, onCancel, prefillData, onPrefillUsed }) => {
   const defaultPharmacy = pharmacies?.find(p => p.isDefault);
   const [formData, setFormData] = useState({
@@ -22,6 +41,8 @@ const MedicationForm = ({ editingMed, timePeriods, pharmacies, providers, onSave
     pharmacy: defaultPharmacy?.id || ''
   });
   const [formErrors, setFormErrors] = useState({});
+  const [notesSuggestions, setNotesSuggestions] = useState([]);
+  const [showNotesDropdown, setShowNotesDropdown] = useState(false);
 
   useEffect(() => {
     if (editingMed) {
