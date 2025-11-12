@@ -51,11 +51,11 @@ const PWAInstallButton = () => {
 
   const handleInstallClick = async () => {
     setIsInstalling(true);
-    
+
     try {
       const success = await pwaService.installPWA();
       console.log('PWA Install Button: Install result:', success);
-      
+
       if (!success) {
         setIsInstalling(false);
       }
@@ -160,11 +160,17 @@ const PWAInstallButton = () => {
       )}
 
       {/* Online/Offline Status */}
-      <div className={`flex items-center gap-2 text-sm px-3 py-1.5 rounded-full transition-all duration-300 ${
-        isOnline 
-          ? 'text-green-700 bg-green-100 border border-green-200'
-          : 'text-amber-700 bg-amber-100 border border-amber-200'
-      }`}>
+      <div
+        className={`flex items-center gap-2 text-sm px-3 py-1.5 rounded-full transition-all duration-300 cursor-help ${
+          isOnline
+            ? 'text-green-700 bg-green-100 border border-green-200'
+            : 'text-amber-700 bg-amber-100 border border-amber-200'
+        }`}
+        title={isOnline
+          ? "✅ Online: Connected to internet. App can sync data and receive updates. All features available."
+          : "📶 Offline: No internet connection. App still works! Your medication data is stored locally on your device. You can track medications, view schedules, and add daily logs. Data will sync when connection returns. Push notifications require internet."
+        }
+      >
         {isOnline ? (
           <>
             <Wifi className="w-3 h-3" />
