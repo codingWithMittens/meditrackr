@@ -4,7 +4,7 @@ class NotificationService {
     this.permission = 'default';
     this.isSupported = 'Notification' in window;
     this.scheduledNotifications = new Map();
-    
+
     this.init();
   }
 
@@ -34,13 +34,13 @@ class NotificationService {
     try {
       const permission = await Notification.requestPermission();
       this.permission = permission;
-      
+
       console.log('Notifications: Permission response:', permission);
-      
+
       if (permission === 'granted') {
         this.showWelcomeNotification();
       }
-      
+
       return permission;
     } catch (error) {
       console.error('Notifications: Error requesting permission:', error);
@@ -66,8 +66,8 @@ class NotificationService {
     }
 
     const defaultOptions = {
-      icon: '/meditrackr/icons/icon-192x192.png',
-      badge: '/meditrackr/icons/badge-72x72.png',
+      icon: '/meditrackr/icons/icon-192x192.svg',
+      badge: '/meditrackr/icons/badge-72x72.svg',
       vibrate: [200, 100, 200],
       requireInteraction: true,
       actions: [
@@ -76,23 +76,23 @@ class NotificationService {
           title: '✅ Mark as Taken'
         },
         {
-          action: 'snooze', 
+          action: 'snooze',
           title: '⏰ Snooze 15 min'
         }
       ]
     };
 
     const notificationOptions = { ...defaultOptions, ...options };
-    
+
     try {
       const notification = new Notification(options.title, notificationOptions);
-      
+
       // Handle notification events
       notification.onclick = (event) => {
         console.log('Notifications: Clicked:', event);
         window.focus();
         notification.close();
-        
+
         // Navigate to medication if specified
         if (options.medicationId) {
           this.handleNotificationClick(options);
@@ -113,7 +113,7 @@ class NotificationService {
   // Schedule medication reminders
   scheduleMedicationReminders(medications) {
     console.log('Notifications: Scheduling reminders for', medications.length, 'medications');
-    
+
     // Clear existing scheduled notifications
     this.clearAllScheduledNotifications();
 
@@ -134,14 +134,14 @@ class NotificationService {
   // Schedule recurring reminder for a specific medication time
   scheduleRecurringReminder(medication, timeSlot) {
     const scheduleId = `${medication.id}-${timeSlot.time}`;
-    
+
     // Calculate next reminder time
     const now = new Date();
     const [hours, minutes] = timeSlot.time.split(':').map(Number);
-    
+
     let nextReminder = new Date();
     nextReminder.setHours(hours, minutes, 0, 0);
-    
+
     // If time has passed today, schedule for tomorrow
     if (nextReminder <= now) {
       nextReminder.setDate(nextReminder.getDate() + 1);
@@ -152,10 +152,10 @@ class NotificationService {
     // Schedule the notification
     const timeoutId = setTimeout(() => {
       this.showMedicationReminder(medication, timeSlot);
-      
+
       // Schedule next occurrence (daily)
       this.scheduleRecurringReminder(medication, timeSlot);
-      
+
     }, nextReminder.getTime() - now.getTime());
 
     // Store the scheduled notification
@@ -171,7 +171,7 @@ class NotificationService {
   showMedicationReminder(medication, timeSlot) {
     const title = `Time for ${medication.name}! 💊`;
     const body = `${medication.dosage} - ${timeSlot.label || timeSlot.time}`;
-    
+
     this.showNotification({
       title,
       body,
@@ -192,7 +192,7 @@ class NotificationService {
         },
         {
           action: 'snooze',
-          title: '⏰ Snooze 15min'  
+          title: '⏰ Snooze 15min'
         },
         {
           action: 'skip',
@@ -224,29 +224,29 @@ class NotificationService {
   // Clear all scheduled notifications
   clearAllScheduledNotifications() {
     console.log('Notifications: Clearing all scheduled notifications');
-    
+
     this.scheduledNotifications.forEach(({ timeoutId }) => {
       clearTimeout(timeoutId);
     });
-    
+
     this.scheduledNotifications.clear();
   }
 
   // Clear specific medication notifications
   clearMedicationNotifications(medicationId) {
     const keysToRemove = [];
-    
+
     this.scheduledNotifications.forEach((notification, key) => {
       if (notification.medication.id === medicationId) {
         clearTimeout(notification.timeoutId);
         keysToRemove.push(key);
       }
     });
-    
+
     keysToRemove.forEach(key => {
       this.scheduledNotifications.delete(key);
     });
-    
+
     this.saveScheduledNotifications();
   }
 
@@ -264,13 +264,13 @@ class NotificationService {
   // Get next scheduled reminder time
   getNextScheduledTime() {
     let nextTime = null;
-    
+
     this.scheduledNotifications.forEach(notification => {
       if (!nextTime || notification.nextTime < nextTime) {
         nextTime = notification.nextTime;
       }
     });
-    
+
     return nextTime;
   }
 
@@ -283,7 +283,7 @@ class NotificationService {
         timeSlot: value.timeSlot,
         nextTime: value.nextTime.getTime()
       }));
-      
+
       localStorage.setItem('scheduled_notifications', JSON.stringify(serializable));
     } catch (error) {
       console.error('Notifications: Error saving scheduled notifications:', error);
@@ -295,20 +295,20 @@ class NotificationService {
     try {
       const saved = localStorage.getItem('scheduled_notifications');
       if (!saved) return;
-      
+
       const notifications = JSON.parse(saved);
       const now = new Date();
-      
+
       notifications.forEach(({ key, medication, timeSlot, nextTime }) => {
         const scheduledTime = new Date(nextTime);
-        
+
         // Only reschedule future notifications
         if (scheduledTime > now) {
           const timeoutId = setTimeout(() => {
             this.showMedicationReminder(medication, timeSlot);
             this.scheduleRecurringReminder(medication, timeSlot);
           }, scheduledTime.getTime() - now.getTime());
-          
+
           this.scheduledNotifications.set(key, {
             timeoutId,
             medication,
@@ -317,7 +317,7 @@ class NotificationService {
           });
         }
       });
-      
+
       console.log('Notifications: Restored', this.scheduledNotifications.size, 'scheduled notifications');
     } catch (error) {
       console.error('Notifications: Error loading scheduled notifications:', error);
@@ -344,13 +344,13 @@ class NotificationService {
   scheduleOneTimeReminder(medication, timeSlot, delayMinutes = 15) {
     const futureTime = new Date();
     futureTime.setMinutes(futureTime.getMinutes() + delayMinutes);
-    
+
     const timeoutId = setTimeout(() => {
       this.showMedicationReminder(medication, timeSlot);
     }, delayMinutes * 60 * 1000);
-    
+
     console.log(`Notifications: Snoozed ${medication.name} for ${delayMinutes} minutes`);
-    
+
     // Store with special snooze key
     const snoozeKey = `snooze-${medication.id}-${timeSlot.time}-${Date.now()}`;
     this.scheduledNotifications.set(snoozeKey, {
@@ -360,9 +360,9 @@ class NotificationService {
       nextTime: futureTime,
       isSnooze: true
     });
-    
+
     this.saveScheduledNotifications();
-    
+
     return snoozeKey;
   }
 }

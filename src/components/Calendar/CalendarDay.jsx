@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Check } from 'lucide-react';
 import { formatDate, getTodayString } from '../../utils/dateHelpers';
 import { getTimeString, groupSchedulesByTime } from '../../utils/scheduleHelpers';
@@ -16,9 +16,9 @@ const CalendarDay = ({
   isCurrentMonth = true,
   getDailyLog
 }) => {
-  const [isMobile, setIsMobile] = React.useState(() => window.innerWidth < 768);
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
 
-  React.useEffect(() => {
+  useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
