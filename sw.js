@@ -2,15 +2,12 @@
 const CACHE_NAME = 'medmindr-v1.0.0';
 const BASE_PATH = '/meditrackr';
 
-// Resources to cache for offline use
+// Resources to cache for offline use (only core files that definitely exist)
 const CACHE_RESOURCES = [
   `${BASE_PATH}/`,
   `${BASE_PATH}/index.html`,
-  `${BASE_PATH}/manifest.json`,
-  `${BASE_PATH}/assets/index.css`,
-  `${BASE_PATH}/assets/index.js`,
-  `${BASE_PATH}/icons/icon-192x192.svg`,
-  `${BASE_PATH}/icons/icon-512x512.svg`
+  `${BASE_PATH}/manifest.json`
+  // Assets will be cached dynamically as they're requested
 ];
 
 // Install event - cache core resources
