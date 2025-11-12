@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar as CalendarIcon, Plus, FileText } from 'lucide-react';
+import { Calendar as CalendarIcon, Plus, FileText, ChevronDown, ChevronUp } from 'lucide-react';
 import { getDaysInMonth, formatDate } from '../../utils/dateHelpers';
 import { getSchedulesForDate } from '../../utils/scheduleHelpers';
 import { DAYS_OF_WEEK_SHORT } from '../../constants/medications';
@@ -9,23 +9,26 @@ import DayModal from './DayModal';
 const Calendar = ({ medications, timePeriods, toggleTaken, onAddNew, updateDailyLog, getDailyLog, onNavigateToReports, userId }) => {
   // Enhanced mobile detection with responsive updates
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
-  const [viewMode, setViewMode] = useState(() => window.innerWidth < 768 ? 'weekly' : 'monthly');
 
   // Update mobile state on resize
   useEffect(() => {
     const handleResize = () => {
       const mobile = window.innerWidth < 768;
       setIsMobile(mobile);
-      // Auto-switch to weekly on mobile for better UX
-      if (mobile && viewMode === 'monthly') {
-        setViewMode('weekly');
-      }
     };
 
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-  }, [viewMode]);
-  const [selectedDate, setSelectedDate] = useState(new Date());
+  }, []);
+
+  // Calendar state - now handles multiple months
+  const today = new Date();
+  const [centerDate, setCenterDate] = useState(today);
+  const [loadedMonths, setLoadedMonths] = useState(() => {
+    // Start with current month
+    return [{ year: today.getFullYear(), month: today.getMonth() }];
+  });
+
   const [selectedDayModal, setSelectedDayModal] = useState(null);
   const [hoveredCard, setHoveredCard] = useState(null);
 
@@ -43,41 +46,56 @@ const Calendar = ({ medications, timePeriods, toggleTaken, onAddNew, updateDaily
     return localStorage.getItem(sessionKey) === 'true';
   });
 
-  const changeMonth = (offset) => {
-    setSelectedDate(new Date(selectedDate.getFullYear(), selectedDate.getMonth() + offset, 1));
+  // Load more months functionality
+  const loadPreviousMonth = () => {
+    const firstMonth = loadedMonths[0];
+    const prevMonth = new Date(firstMonth.year, firstMonth.month - 1, 1);
+    const newMonth = { year: prevMonth.getFullYear(), month: prevMonth.getMonth() };
+
+    setLoadedMonths(prev => [newMonth, ...prev]);
   };
 
-  const changeWeek = (offset) => {
-    const newDate = new Date(selectedDate);
-    newDate.setDate(selectedDate.getDate() + (offset * 7));
-    setSelectedDate(newDate);
+  const loadNextMonth = () => {
+    const lastMonth = loadedMonths[loadedMonths.length - 1];
+    const nextMonth = new Date(lastMonth.year, lastMonth.month + 1, 1);
+    const newMonth = { year: nextMonth.getFullYear(), month: nextMonth.getMonth() };
+
+    setLoadedMonths(prev => [...prev, newMonth]);
   };
 
-  const getWeekDays = (date) => {
-    const startOfWeek = new Date(date);
-    const day = startOfWeek.getDay();
-    const diff = startOfWeek.getDate() - day;
-    startOfWeek.setDate(diff);
+  // Generate all days for loaded months
+  const getAllDays = () => {
+    const allDays = [];
 
-    const days = [];
-    for (let i = 0; i < 7; i++) {
-      const currentDay = new Date(startOfWeek);
-      currentDay.setDate(startOfWeek.getDate() + i);
-      days.push(currentDay);
-    }
-    return days;
-  };
+    loadedMonths.forEach((monthData, monthIndex) => {
+      const monthDate = new Date(monthData.year, monthData.month, 1);
+      const daysInMonth = getDaysInMonth(monthDate);
 
-  const getWeekDateRange = () => {
-    const weekDays = getWeekDays(selectedDate);
-    const start = weekDays[0];
-    const end = weekDays[6];
+      // Add month header marker
+      allDays.push({
+        type: 'monthHeader',
+        date: monthDate,
+        monthIndex,
+        isFirst: monthIndex === 0,
+        isLast: monthIndex === loadedMonths.length - 1
+      });
 
-    if (start.getMonth() === end.getMonth()) {
-      return `${start.toLocaleDateString('en-US', { month: 'long', day: 'numeric' })} - ${end.getDate()}, ${end.getFullYear()}`;
-    } else {
-      return `${start.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${end.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}, ${end.getFullYear()}`;
-    }
+      // Add all days for this month
+      daysInMonth.forEach(day => {
+        if (day) {
+          allDays.push({
+            type: 'day',
+            date: day,
+            monthData,
+            isCurrentMonth: day.getMonth() === monthData.month
+          });
+        } else {
+          allDays.push({ type: 'empty' });
+        }
+      });
+    });
+
+    return allDays;
   };
 
   const handleDayClick = (day, schedulesForDay) => {
@@ -99,30 +117,22 @@ const Calendar = ({ medications, timePeriods, toggleTaken, onAddNew, updateDaily
     toggleTaken(medId, date, time);
   };
 
-  // Touch handlers for swipe navigation
-  const onTouchStart = (e) => {
-    setTouchEnd(null);
-    setTouchStart(e.targetTouches[0].clientX);
-  };
+  // Get current date range for display
+  const getDateRange = () => {
+    if (loadedMonths.length === 1) {
+      const monthData = loadedMonths[0];
+      const date = new Date(monthData.year, monthData.month, 1);
+      return date.toLocaleDateString('en-US', {
+        month: isMobile ? 'short' : 'long',
+        year: 'numeric'
+      });
+    } else {
+      const firstMonth = loadedMonths[0];
+      const lastMonth = loadedMonths[loadedMonths.length - 1];
+      const startDate = new Date(firstMonth.year, firstMonth.month, 1);
+      const endDate = new Date(lastMonth.year, lastMonth.month, 1);
 
-  const onTouchMove = (e) => {
-    setTouchEnd(e.targetTouches[0].clientX);
-  };
-
-  const onTouchEnd = () => {
-    if (!touchStart || !touchEnd) return;
-
-    const distance = touchStart - touchEnd;
-    const isLeftSwipe = distance > minSwipeDistance;
-    const isRightSwipe = distance < -minSwipeDistance;
-
-    if (isLeftSwipe) {
-      // Swipe left = go forward
-      viewMode === 'weekly' ? changeWeek(1) : changeMonth(1);
-    }
-    if (isRightSwipe) {
-      // Swipe right = go back
-      viewMode === 'weekly' ? changeWeek(-1) : changeMonth(-1);
+      return `${startDate.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })} - ${endDate.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}`;
     }
   };
 
@@ -270,55 +280,26 @@ const Calendar = ({ medications, timePeriods, toggleTaken, onAddNew, updateDaily
     );
   }
 
-  const days = viewMode === 'weekly' ? getWeekDays(selectedDate) : getDaysInMonth(selectedDate);
+  const allDays = getAllDays();
 
   return (
     <>
       <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/50 p-6">
-        {/* View Toggle */}
-        <div className="flex justify-center mb-4">
-                  <div className="inline-flex rounded-xl border border-gray-200 bg-gray-50/80 p-1.5 backdrop-blur-sm">
-          <button
-            onClick={() => setViewMode('weekly')}
-            className={`px-5 py-2.5 rounded-lg text-sm font-semibold transition-all duration-200 ${
-              viewMode === 'weekly'
-                ? 'bg-white text-blue-600 shadow-md shadow-blue-500/10'
-                : 'text-gray-600 hover:text-gray-800 hover:bg-white/70'
-            }`}
-          >
-            Weekly
-          </button>
-          <button
-            onClick={() => setViewMode('monthly')}
-            className={`px-5 py-2.5 rounded-lg text-sm font-semibold transition-all duration-200 ${
-              viewMode === 'monthly'
-                ? 'bg-white text-blue-600 shadow-md shadow-blue-500/10'
-                : 'text-gray-600 hover:text-gray-800 hover:bg-white/70'
-            }`}
-          >
-            Monthly
-          </button>
-        </div>
-        </div>
-
-        {/* Navigation */}
+        {/* Header with Load More Controls */}
         <div className="flex items-center justify-between mb-4 sm:mb-6">
+          {/* Load Previous Months */}
           <button
-            onClick={() => viewMode === 'weekly' ? changeWeek(-1) : changeMonth(-1)}
-            className={`${isMobile ? 'p-2' : 'p-3'} hover:bg-gray-100/70 rounded-xl transition-all duration-200 hover:shadow-sm border border-transparent hover:border-gray-200 touch-manipulation`}
+            onClick={loadPreviousMonth}
+            className={`flex items-center gap-1 ${isMobile ? 'px-2 py-1' : 'px-3 py-2'} hover:bg-gray-100/70 rounded-xl transition-all duration-200 hover:shadow-sm border border-transparent hover:border-gray-200 touch-manipulation`}
+            title="Load Previous Month"
           >
-            <span className={`${isMobile ? 'text-lg' : 'text-xl'} font-bold`}>←</span>
+            <ChevronUp className={`${isMobile ? 'w-3 h-3' : 'w-4 h-4'}`} />
+            <span className={`${isMobile ? 'text-xs' : 'text-sm'} font-medium`}>More</span>
           </button>
 
           <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4 text-center">
             <h2 className={`${isMobile ? 'text-lg' : 'text-2xl'} font-bold leading-tight`}>
-              {viewMode === 'weekly'
-                ? getWeekDateRange()
-                : selectedDate.toLocaleDateString('en-US', {
-                    month: isMobile ? 'short' : 'long',
-                    year: 'numeric'
-                  })
-              }
+              {getDateRange()}
             </h2>
 
             {/* Reports/Export Button */}
@@ -334,55 +315,83 @@ const Calendar = ({ medications, timePeriods, toggleTaken, onAddNew, updateDaily
             </button>
           </div>
 
+          {/* Load Next Months */}
           <button
-            onClick={() => viewMode === 'weekly' ? changeWeek(1) : changeMonth(1)}
-            className={`${isMobile ? 'p-2' : 'p-3'} hover:bg-gray-100/70 rounded-xl transition-all duration-200 hover:shadow-sm border border-transparent hover:border-gray-200 touch-manipulation`}
+            onClick={loadNextMonth}
+            className={`flex items-center gap-1 ${isMobile ? 'px-2 py-1' : 'px-3 py-2'} hover:bg-gray-100/70 rounded-xl transition-all duration-200 hover:shadow-sm border border-transparent hover:border-gray-200 touch-manipulation`}
+            title="Load Next Month"
           >
-            <span className={`${isMobile ? 'text-lg' : 'text-xl'} font-bold`}>→</span>
+            <span className={`${isMobile ? 'text-xs' : 'text-sm'} font-medium`}>More</span>
+            <ChevronDown className={`${isMobile ? 'w-3 h-3' : 'w-4 h-4'}`} />
           </button>
         </div>
 
-        <div
-          className={`grid grid-cols-7 ${isMobile ? 'gap-1' : 'gap-2'} calendar-grid`}
-          onTouchStart={isMobile ? onTouchStart : undefined}
-          onTouchMove={isMobile ? onTouchMove : undefined}
-          onTouchEnd={isMobile ? onTouchEnd : undefined}
-        >
-          {DAYS_OF_WEEK_SHORT.map(day => (
-            <div key={day} className={`text-center font-semibold text-gray-600 ${isMobile ? 'p-1 text-xs' : 'p-2 text-sm'}`}>
-              {isMobile ? day.slice(0, 1) : day}
-            </div>
-          ))}
-
-          {days.map((day, index) => {
-            if (!day) return <div key={index} className="p-2"></div>;
-
-                        const dateStr = formatDate(day);
-            const schedulesForDay = medications.flatMap(med =>
-              getSchedulesForDate(med, dateStr).map(s => ({
-                ...s,
-                medId: med.id,
-                medName: med.name,
-                medDosage: med.dosage
-              }))
-            );
-
-            const isCurrentMonth = viewMode === 'monthly' ? day.getMonth() === selectedDate.getMonth() : true;
+        {/* Scrollable Calendar Container */}
+        <div className="space-y-4">
+          {loadedMonths.map((monthData, monthIndex) => {
+            const monthDate = new Date(monthData.year, monthData.month, 1);
+            const daysInMonth = getDaysInMonth(monthDate);
 
             return (
-              <CalendarDay
-                key={index}
-                day={day}
-                dateStr={dateStr}
-                schedulesForDay={schedulesForDay}
-                timePeriods={timePeriods}
-                hoveredCard={hoveredCard}
-                setHoveredCard={setHoveredCard}
-                onClick={() => handleDayClick(day, schedulesForDay)}
-                onAddNew={onAddNew}
-                isCurrentMonth={isCurrentMonth}
-                getDailyLog={getDailyLog}
-              />
+              <div key={`${monthData.year}-${monthData.month}`} className="space-y-2">
+                {/* Month Header */}
+                <div className="flex items-center justify-center py-2">
+                  <div className={`bg-gradient-to-r from-blue-500 to-teal-600 text-white ${isMobile ? 'px-3 py-1' : 'px-4 py-2'} rounded-full shadow-lg`}>
+                    <h3 className={`${isMobile ? 'text-sm' : 'text-base'} font-bold`}>
+                      {monthDate.toLocaleDateString('en-US', {
+                        month: 'long',
+                        year: 'numeric'
+                      })}
+                    </h3>
+                  </div>
+                </div>
+
+                {/* Day Headers (only for first month or when month changes) */}
+                {monthIndex === 0 && (
+                  <div className={`grid grid-cols-7 ${isMobile ? 'gap-1' : 'gap-2'}`}>
+                    {DAYS_OF_WEEK_SHORT.map(day => (
+                      <div key={day} className={`text-center font-semibold text-gray-600 ${isMobile ? 'p-1 text-xs' : 'p-2 text-sm'}`}>
+                        {isMobile ? day.slice(0, 1) : day}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Month Calendar Grid */}
+                <div className={`grid grid-cols-7 ${isMobile ? 'gap-1' : 'gap-2'} calendar-grid`}>
+                  {daysInMonth.map((day, dayIndex) => {
+                    if (!day) return <div key={dayIndex} className="p-2"></div>;
+
+                    const dateStr = formatDate(day);
+                    const schedulesForDay = medications.flatMap(med =>
+                      getSchedulesForDate(med, dateStr).map(s => ({
+                        ...s,
+                        medId: med.id,
+                        medName: med.name,
+                        medDosage: med.dosage
+                      }))
+                    );
+
+                    const isCurrentMonth = day.getMonth() === monthData.month;
+
+                    return (
+                      <CalendarDay
+                        key={`${monthData.year}-${monthData.month}-${dayIndex}`}
+                        day={day}
+                        dateStr={dateStr}
+                        schedulesForDay={schedulesForDay}
+                        timePeriods={timePeriods}
+                        hoveredCard={hoveredCard}
+                        setHoveredCard={setHoveredCard}
+                        onClick={() => handleDayClick(day, schedulesForDay)}
+                        onAddNew={onAddNew}
+                        isCurrentMonth={isCurrentMonth}
+                        getDailyLog={getDailyLog}
+                      />
+                    );
+                  })}
+                </div>
+              </div>
             );
           })}
         </div>
