@@ -1,6 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import { Calendar, Settings, AlertCircle, Clock, MapPin, User, Wrench, LogOut, PlayCircle } from 'lucide-react';
+import { Calendar, Settings, AlertCircle, Clock, MapPin, User, Wrench, LogOut, PlayCircle, Bell } from 'lucide-react';
 
 const Header = ({
   currentView,
@@ -10,7 +10,8 @@ const Header = ({
   setShowSettingsMenu,
   user,
   onLogout,
-  onStartTour
+  onStartTour,
+  onNavigateToNotifications
 }) => {
   const handleTitleClick = () => {
     setCurrentView('calendar');
@@ -101,6 +102,16 @@ const Header = ({
                     >
                       <User className="w-5 h-5 text-violet-600" />
                       <span className="font-semibold text-gray-700">Providers</span>
+                    </button>
+                    <button
+                      onClick={() => {
+                        onNavigateToNotifications?.();
+                        setShowSettingsMenu(false);
+                      }}
+                      className="w-full text-left px-4 py-3 hover:bg-blue-50/60 flex items-center gap-3 border-b border-gray-100/50 transition-colors duration-200 settings-notifications"
+                    >
+                      <Bell className="w-5 h-5 text-blue-600" />
+                      <span className="font-semibold text-gray-700">Notifications</span>
                     </button>
                     <button
                       onClick={() => {

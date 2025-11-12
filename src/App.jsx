@@ -13,6 +13,10 @@ import AuthScreen from './components/Auth/AuthScreen.jsx';
 import Tour from './components/Tour/Tour.jsx';
 import './components/Tour/tour.css';
 import './styles/print.css';
+import pwaService from './services/pwaService';
+import notificationService from './services/notificationService';
+import PWAInstallButton from './components/PWA/PWAInstallButton';
+import NotificationSettings from './components/Settings/NotificationSettings';
 
 // Add pulse animation styles
 const pulseStyles = `
@@ -94,6 +98,40 @@ function AuthenticatedContent({ user, logout }) {
   const [showForm, setShowForm] = useState(false);
   const [editingMed, setEditingMed] = useState(null);
   const [showSettingsMenu, setShowSettingsMenu] = useState(false);
+
+  // PWA and notification state
+  useEffect(() => {
+    // Initialize PWA services
+    console.log('Initializing PWA services...');
+
+    // Listen for notification events
+    const handleNotificationClick = (event) => {
+      console.log('App: Notification clicked', event.detail);
+      // Handle medication reminder notifications
+      if (event.detail.medicationId) {
+        setCurrentView('calendar');
+        // Could also open the specific day modal
+      }
+    };
+
+    const handleMedicationTaken = (event) => {
+      console.log('App: Medication taken via notification', event.detail);
+      // Mark medication as taken
+      if (event.detail.medicationId && event.detail.timestamp) {
+        const { medicationId, timeSlot } = event.detail;
+        const today = new Date().toISOString().split('T')[0];
+        toggleTaken(medicationId, today, timeSlot);
+      }
+    };
+
+    window.addEventListener('notification-medication-click', handleNotificationClick);
+    window.addEventListener('medication-taken-notification', handleMedicationTaken);
+
+    return () => {
+      window.removeEventListener('notification-medication-click', handleNotificationClick);
+      window.removeEventListener('medication-taken-notification', handleMedicationTaken);
+    };
+  }, []);
 
   // Tour form prefill data
   const [prefillData, setPrefillData] = useState(null);
@@ -211,6 +249,10 @@ function AuthenticatedContent({ user, logout }) {
     }
   };
 
+  const handleNavigateToNotifications = () => {
+    setCurrentView('notifications');
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-teal-50 p-4">
       <div className="max-w-6xl mx-auto">
@@ -223,6 +265,7 @@ function AuthenticatedContent({ user, logout }) {
           user={user}
           onLogout={logout}
           onStartTour={resetTour}
+          onNavigateToNotifications={handleNavigateToNotifications}
         />
 
         {showForm && (
@@ -239,16 +282,19 @@ function AuthenticatedContent({ user, logout }) {
         )}
 
         {!showForm && currentView === 'calendar' && (
-          <Calendar
-            medications={medications}
-            timePeriods={timePeriods}
-            toggleTaken={toggleTaken}
-            onAddNew={handleAddNew}
-            updateDailyLog={updateDailyLog}
-            getDailyLog={getDailyLog}
-            onNavigateToReports={handleNavigateToReports}
-            userId={user?.id}
-          />
+          <>
+            <PWAInstallButton />
+            <Calendar
+              medications={medications}
+              timePeriods={timePeriods}
+              toggleTaken={toggleTaken}
+              onAddNew={handleAddNew}
+              updateDailyLog={updateDailyLog}
+              getDailyLog={getDailyLog}
+              onNavigateToReports={handleNavigateToReports}
+              userId={user?.id}
+            />
+          </>
         )}
 
         {!showForm && currentView === 'list' && (
@@ -315,6 +361,13 @@ function AuthenticatedContent({ user, logout }) {
         {!showForm && currentView === 'advanced' && (
           <AdvancedSettings
             user={user}
+          />
+        )}
+
+        {!showForm && currentView === 'notifications' && (
+          <NotificationSettings
+            medications={medications}
+            onBack={handleBackToCalendar}
           />
         )}
 

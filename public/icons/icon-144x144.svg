@@ -1,0 +1,29 @@
+<svg width="144" height="144" viewBox="0 0 144 144" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background gradient -->
+  <defs>
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#3b82f6;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#14b8a6;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="pillGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#ffffff;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#f1f5f9;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+
+  <!-- Background circle -->
+  <circle cx="72" cy="72" r="70" fill="url(#bgGradient)"/>
+
+  <!-- Pill icon -->
+  <g transform="translate(36, 36)">
+    <!-- Pill body -->
+    <ellipse cx="36" cy="36" rx="21.599999999999998" ry="36" fill="url(#pillGradient)" stroke="#e2e8f0" stroke-width="1"/>
+    <!-- Pill split line -->
+    <line x1="14.4" y1="36" x2="57.6" y2="36" stroke="#cbd5e1" stroke-width="1"/>
+    <!-- Plus sign for medical -->
+    <g transform="translate(7.2, 7.2)">
+      <rect x="11.52" y="21.599999999999998" width="5.76" height="28.8" fill="#3b82f6"/>
+      <rect x="2.88" y="27.36" width="23.04" height="5.76" fill="#3b82f6"/>
+    </g>
+  </g>
+</svg>
