@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Calendar as CalendarIcon } from 'lucide-react';
 import Header from './components/Header.jsx';
 import Calendar from './components/Calendar/Calendar.jsx';
@@ -137,7 +137,7 @@ function AuthenticatedContent({ user, logout }) {
   const [prefillData, setPrefillData] = useState(null);
 
   // Demo data loading handler
-  React.useEffect(() => {
+  useEffect(() => {
     const handleLoadDemoData = async () => {
       // Import demo data
       try {

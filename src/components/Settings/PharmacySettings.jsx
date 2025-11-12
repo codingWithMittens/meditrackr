@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Plus, Edit3, Trash2, Phone, MapPin, AlertCircle, ArrowLeft, Calendar } from 'lucide-react';
 
 const PharmacySettings = ({ pharmacies, onAdd, onUpdate, onDelete, onSetDefault, onBackToCalendar, prefillData, onPrefillUsed }) => {
   const [showForm, setShowForm] = useState(false);
 
   // Auto-open form if prefill data is provided (tour)
-  React.useEffect(() => {
+  useEffect(() => {
     if (prefillData) {
       setFormData(prefillData);
       setShowForm(true);
