@@ -21,13 +21,25 @@ const Calendar = ({ medications, timePeriods, toggleTaken, onAddNew, updateDaily
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Calendar state - now handles multiple months
+  // Calendar state - weekly view with infinite scroll
   const today = new Date();
   const [centerDate, setCenterDate] = useState(today);
-  const [loadedMonths, setLoadedMonths] = useState(() => {
-    // Start with current month
-    return [{ year: today.getFullYear(), month: today.getMonth() }];
+  const [loadedWeeks, setLoadedWeeks] = useState(() => {
+    // Start with current week and surrounding weeks
+    const currentWeek = getWeekStart(today);
+    const weeks = [];
+
+    // Load 3 weeks: previous, current, next
+    for (let i = -1; i <= 1; i++) {
+      const weekStart = new Date(currentWeek);
+      weekStart.setDate(currentWeek.getDate() + (i * 7));
+      weeks.push(weekStart);
+    }
+
+    return weeks;
   });
+
+  const [isLoading, setIsLoading] = useState(false);
 
   const [selectedDayModal, setSelectedDayModal] = useState(null);
   const [hoveredCard, setHoveredCard] = useState(null);
@@ -46,56 +58,80 @@ const Calendar = ({ medications, timePeriods, toggleTaken, onAddNew, updateDaily
     return localStorage.getItem(sessionKey) === 'true';
   });
 
-  // Load more months functionality
-  const loadPreviousMonth = () => {
-    const firstMonth = loadedMonths[0];
-    const prevMonth = new Date(firstMonth.year, firstMonth.month - 1, 1);
-    const newMonth = { year: prevMonth.getFullYear(), month: prevMonth.getMonth() };
-
-    setLoadedMonths(prev => [newMonth, ...prev]);
+    // Helper function to get start of week (Sunday)
+  const getWeekStart = (date) => {
+    const start = new Date(date);
+    const day = start.getDay();
+    const diff = start.getDate() - day;
+    start.setDate(diff);
+    start.setHours(0, 0, 0, 0);
+    return start;
   };
 
-  const loadNextMonth = () => {
-    const lastMonth = loadedMonths[loadedMonths.length - 1];
-    const nextMonth = new Date(lastMonth.year, lastMonth.month + 1, 1);
-    const newMonth = { year: nextMonth.getFullYear(), month: nextMonth.getMonth() };
-
-    setLoadedMonths(prev => [...prev, newMonth]);
+  // Get week days from a start date
+  const getWeekDays = (weekStart) => {
+    const days = [];
+    for (let i = 0; i < 7; i++) {
+      const day = new Date(weekStart);
+      day.setDate(weekStart.getDate() + i);
+      days.push(day);
+    }
+    return days;
   };
 
-  // Generate all days for loaded months
-  const getAllDays = () => {
-    const allDays = [];
+  // Load more weeks functionality
+  const loadPreviousWeeks = async (count = 2) => {
+    if (isLoading) return;
 
-    loadedMonths.forEach((monthData, monthIndex) => {
-      const monthDate = new Date(monthData.year, monthData.month, 1);
-      const daysInMonth = getDaysInMonth(monthDate);
+    setIsLoading(true);
+    const firstWeek = loadedWeeks[0];
+    const newWeeks = [];
 
-      // Add month header marker
-      allDays.push({
-        type: 'monthHeader',
-        date: monthDate,
-        monthIndex,
-        isFirst: monthIndex === 0,
-        isLast: monthIndex === loadedMonths.length - 1
-      });
+    for (let i = count; i > 0; i--) {
+      const prevWeek = new Date(firstWeek);
+      prevWeek.setDate(firstWeek.getDate() - (i * 7));
+      newWeeks.push(prevWeek);
+    }
 
-      // Add all days for this month
-      daysInMonth.forEach(day => {
-        if (day) {
-          allDays.push({
-            type: 'day',
-            date: day,
-            monthData,
-            isCurrentMonth: day.getMonth() === monthData.month
-          });
-        } else {
-          allDays.push({ type: 'empty' });
-        }
-      });
-    });
+    setLoadedWeeks(prev => [...newWeeks, ...prev]);
 
-    return allDays;
+    // Small delay to prevent rapid fire loading
+    setTimeout(() => setIsLoading(false), 100);
+  };
+
+  const loadNextWeeks = async (count = 2) => {
+    if (isLoading) return;
+
+    setIsLoading(true);
+    const lastWeek = loadedWeeks[loadedWeeks.length - 1];
+    const newWeeks = [];
+
+    for (let i = 1; i <= count; i++) {
+      const nextWeek = new Date(lastWeek);
+      nextWeek.setDate(lastWeek.getDate() + (i * 7));
+      newWeeks.push(nextWeek);
+    }
+
+    setLoadedWeeks(prev => [...prev, ...newWeeks]);
+
+    // Small delay to prevent rapid fire loading
+    setTimeout(() => setIsLoading(false), 100);
+  };
+
+    // Infinite scroll handler
+  const handleScroll = (e) => {
+    const container = e.target;
+    const { scrollTop, scrollHeight, clientHeight } = container;
+
+    // Load previous weeks when near top (within 200px)
+    if (scrollTop < 200 && !isLoading) {
+      loadPreviousWeeks();
+    }
+
+    // Load next weeks when near bottom (within 200px)
+    if (scrollHeight - scrollTop - clientHeight < 200 && !isLoading) {
+      loadNextWeeks();
+    }
   };
 
   const handleDayClick = (day, schedulesForDay) => {
@@ -119,20 +155,30 @@ const Calendar = ({ medications, timePeriods, toggleTaken, onAddNew, updateDaily
 
   // Get current date range for display
   const getDateRange = () => {
-    if (loadedMonths.length === 1) {
-      const monthData = loadedMonths[0];
-      const date = new Date(monthData.year, monthData.month, 1);
-      return date.toLocaleDateString('en-US', {
-        month: isMobile ? 'short' : 'long',
-        year: 'numeric'
-      });
-    } else {
-      const firstMonth = loadedMonths[0];
-      const lastMonth = loadedMonths[loadedMonths.length - 1];
-      const startDate = new Date(firstMonth.year, firstMonth.month, 1);
-      const endDate = new Date(lastMonth.year, lastMonth.month, 1);
+    if (loadedWeeks.length === 0) return 'Loading...';
 
-      return `${startDate.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })} - ${endDate.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}`;
+    const firstWeek = loadedWeeks[0];
+    const lastWeek = loadedWeeks[loadedWeeks.length - 1];
+    const firstWeekEnd = new Date(firstWeek);
+    firstWeekEnd.setDate(firstWeek.getDate() + 6);
+    const lastWeekEnd = new Date(lastWeek);
+    lastWeekEnd.setDate(lastWeek.getDate() + 6);
+
+    if (loadedWeeks.length <= 3) {
+      // Show current week range
+      const currentWeekIndex = Math.floor(loadedWeeks.length / 2);
+      const currentWeek = loadedWeeks[currentWeekIndex];
+      const weekEnd = new Date(currentWeek);
+      weekEnd.setDate(currentWeek.getDate() + 6);
+
+      if (currentWeek.getMonth() === weekEnd.getMonth()) {
+        return `${currentWeek.toLocaleDateString('en-US', { month: 'long', day: 'numeric' })} - ${weekEnd.getDate()}, ${weekEnd.getFullYear()}`;
+      } else {
+        return `${currentWeek.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${weekEnd.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}, ${weekEnd.getFullYear()}`;
+      }
+    } else {
+      // Show full range when many weeks loaded
+      return `${firstWeek.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${lastWeekEnd.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}, ${lastWeekEnd.getFullYear()}`;
     }
   };
 
@@ -280,23 +326,11 @@ const Calendar = ({ medications, timePeriods, toggleTaken, onAddNew, updateDaily
     );
   }
 
-  const allDays = getAllDays();
-
   return (
     <>
       <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/50 p-6">
-        {/* Header with Load More Controls */}
-        <div className="flex items-center justify-between mb-4 sm:mb-6">
-          {/* Load Previous Months */}
-          <button
-            onClick={loadPreviousMonth}
-            className={`flex items-center gap-1 ${isMobile ? 'px-2 py-1' : 'px-3 py-2'} hover:bg-gray-100/70 rounded-xl transition-all duration-200 hover:shadow-sm border border-transparent hover:border-gray-200 touch-manipulation`}
-            title="Load Previous Month"
-          >
-            <ChevronUp className={`${isMobile ? 'w-3 h-3' : 'w-4 h-4'}`} />
-            <span className={`${isMobile ? 'text-xs' : 'text-sm'} font-medium`}>More</span>
-          </button>
-
+        {/* Header */}
+        <div className="flex items-center justify-center mb-4 sm:mb-6">
           <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4 text-center">
             <h2 className={`${isMobile ? 'text-lg' : 'text-2xl'} font-bold leading-tight`}>
               {getDateRange()}
@@ -314,54 +348,56 @@ const Calendar = ({ medications, timePeriods, toggleTaken, onAddNew, updateDaily
               </span>
             </button>
           </div>
-
-          {/* Load Next Months */}
-          <button
-            onClick={loadNextMonth}
-            className={`flex items-center gap-1 ${isMobile ? 'px-2 py-1' : 'px-3 py-2'} hover:bg-gray-100/70 rounded-xl transition-all duration-200 hover:shadow-sm border border-transparent hover:border-gray-200 touch-manipulation`}
-            title="Load Next Month"
-          >
-            <span className={`${isMobile ? 'text-xs' : 'text-sm'} font-medium`}>More</span>
-            <ChevronDown className={`${isMobile ? 'w-3 h-3' : 'w-4 h-4'}`} />
-          </button>
         </div>
 
-        {/* Scrollable Calendar Container */}
-        <div className="space-y-4">
-          {loadedMonths.map((monthData, monthIndex) => {
-            const monthDate = new Date(monthData.year, monthData.month, 1);
-            const daysInMonth = getDaysInMonth(monthDate);
+                {/* Day Headers */}
+        <div className={`grid grid-cols-7 ${isMobile ? 'gap-1' : 'gap-2'} mb-4`}>
+          {DAYS_OF_WEEK_SHORT.map(day => (
+            <div key={day} className={`text-center font-semibold text-gray-600 ${isMobile ? 'p-1 text-xs' : 'p-2 text-sm'}`}>
+              {isMobile ? day.slice(0, 1) : day}
+            </div>
+          ))}
+        </div>
+
+        {/* Scrollable Weekly Calendar Container */}
+        <div
+          className="max-h-96 sm:max-h-[500px] overflow-y-auto space-y-6"
+          onScroll={handleScroll}
+        >
+          {isLoading && (
+            <div className="text-center py-2 text-gray-500 text-sm">
+              Loading more weeks...
+            </div>
+          )}
+
+          {loadedWeeks.map((weekStart, weekIndex) => {
+            const weekDays = getWeekDays(weekStart);
+            const weekEnd = new Date(weekStart);
+            weekEnd.setDate(weekStart.getDate() + 6);
+
+            // Show month indicator when month changes
+            const showMonthHeader = weekIndex === 0 ||
+              (weekIndex > 0 && weekStart.getMonth() !== loadedWeeks[weekIndex - 1].getMonth());
 
             return (
-              <div key={`${monthData.year}-${monthData.month}`} className="space-y-2">
-                {/* Month Header */}
-                <div className="flex items-center justify-center py-2">
-                  <div className={`bg-gradient-to-r from-blue-500 to-teal-600 text-white ${isMobile ? 'px-3 py-1' : 'px-4 py-2'} rounded-full shadow-lg`}>
-                    <h3 className={`${isMobile ? 'text-sm' : 'text-base'} font-bold`}>
-                      {monthDate.toLocaleDateString('en-US', {
-                        month: 'long',
-                        year: 'numeric'
-                      })}
-                    </h3>
-                  </div>
-                </div>
-
-                {/* Day Headers (only for first month or when month changes) */}
-                {monthIndex === 0 && (
-                  <div className={`grid grid-cols-7 ${isMobile ? 'gap-1' : 'gap-2'}`}>
-                    {DAYS_OF_WEEK_SHORT.map(day => (
-                      <div key={day} className={`text-center font-semibold text-gray-600 ${isMobile ? 'p-1 text-xs' : 'p-2 text-sm'}`}>
-                        {isMobile ? day.slice(0, 1) : day}
-                      </div>
-                    ))}
+              <div key={weekStart.getTime()} className="space-y-2">
+                {/* Month Header Indicator */}
+                {showMonthHeader && (
+                  <div className="flex items-center justify-center py-2">
+                    <div className={`bg-gradient-to-r from-blue-500 to-teal-600 text-white ${isMobile ? 'px-3 py-1' : 'px-4 py-2'} rounded-full shadow-lg`}>
+                      <h3 className={`${isMobile ? 'text-xs' : 'text-sm'} font-bold`}>
+                        {weekStart.toLocaleDateString('en-US', {
+                          month: 'long',
+                          year: 'numeric'
+                        })}
+                      </h3>
+                    </div>
                   </div>
                 )}
 
-                {/* Month Calendar Grid */}
+                {/* Weekly Calendar Grid */}
                 <div className={`grid grid-cols-7 ${isMobile ? 'gap-1' : 'gap-2'} calendar-grid`}>
-                  {daysInMonth.map((day, dayIndex) => {
-                    if (!day) return <div key={dayIndex} className="p-2"></div>;
-
+                  {weekDays.map((day, dayIndex) => {
                     const dateStr = formatDate(day);
                     const schedulesForDay = medications.flatMap(med =>
                       getSchedulesForDate(med, dateStr).map(s => ({
@@ -372,11 +408,9 @@ const Calendar = ({ medications, timePeriods, toggleTaken, onAddNew, updateDaily
                       }))
                     );
 
-                    const isCurrentMonth = day.getMonth() === monthData.month;
-
                     return (
                       <CalendarDay
-                        key={`${monthData.year}-${monthData.month}-${dayIndex}`}
+                        key={`${weekStart.getTime()}-${dayIndex}`}
                         day={day}
                         dateStr={dateStr}
                         schedulesForDay={schedulesForDay}
@@ -385,7 +419,7 @@ const Calendar = ({ medications, timePeriods, toggleTaken, onAddNew, updateDaily
                         setHoveredCard={setHoveredCard}
                         onClick={() => handleDayClick(day, schedulesForDay)}
                         onAddNew={onAddNew}
-                        isCurrentMonth={isCurrentMonth}
+                        isCurrentMonth={true} // Always true for weekly view
                         getDailyLog={getDailyLog}
                       />
                     );
