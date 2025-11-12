@@ -9,14 +9,14 @@ const CACHE_RESOURCES = [
   `${BASE_PATH}/manifest.json`,
   `${BASE_PATH}/assets/index.css`,
   `${BASE_PATH}/assets/index.js`,
-  `${BASE_PATH}/icons/icon-192x192.png`,
-  `${BASE_PATH}/icons/icon-512x512.png`
+  `${BASE_PATH}/icons/icon-192x192.svg`,
+  `${BASE_PATH}/icons/icon-512x512.svg`
 ];
 
 // Install event - cache core resources
 self.addEventListener('install', event => {
   console.log('MedMindr SW: Installing...');
-  
+
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(cache => {
@@ -33,7 +33,7 @@ self.addEventListener('install', event => {
 // Activate event - clean up old caches
 self.addEventListener('activate', event => {
   console.log('MedMindr SW: Activating...');
-  
+
   event.waitUntil(
     caches.keys().then(cacheNames => {
       return Promise.all(
@@ -59,11 +59,11 @@ self.addEventListener('fetch', event => {
   }
 
   // Handle medication data requests specially
-  if (event.request.url.includes('medications_') || 
+  if (event.request.url.includes('medications_') ||
       event.request.url.includes('dailyLogs_') ||
       event.request.url.includes('pharmacies_') ||
       event.request.url.includes('providers_')) {
-    
+
     // Always go to network for user data, fallback to cache
     event.respondWith(
       fetch(event.request)
@@ -110,12 +110,12 @@ self.addEventListener('fetch', event => {
           })
           .catch(error => {
             console.log('MedMindr SW: Network request failed:', error);
-            
+
             // Return offline page for navigation requests
             if (event.request.mode === 'navigate') {
               return caches.match(`${BASE_PATH}/index.html`);
             }
-            
+
             throw error;
           });
       })
@@ -125,11 +125,11 @@ self.addEventListener('fetch', event => {
 // Push notification event
 self.addEventListener('push', event => {
   console.log('MedMindr SW: Push received');
-  
+
   let notificationData = {
     title: 'MedMindr Reminder',
     body: 'It\'s time to take your medication',
-    icon: `${BASE_PATH}/icons/icon-192x192.png`,
+    icon: `${BASE_PATH}/icons/icon-192x192.svg`,
     badge: `${BASE_PATH}/icons/badge-72x72.png`,
     tag: 'medication-reminder',
     requireInteraction: true,
@@ -140,7 +140,7 @@ self.addEventListener('push', event => {
         icon: `${BASE_PATH}/icons/check.png`
       },
       {
-        action: 'snooze', 
+        action: 'snooze',
         title: '⏰ Snooze 15 min',
         icon: `${BASE_PATH}/icons/snooze.png`
       },
@@ -183,12 +183,12 @@ self.addEventListener('push', event => {
 // Notification click event
 self.addEventListener('notificationclick', event => {
   console.log('MedMindr SW: Notification clicked:', event);
-  
+
   event.notification.close();
-  
+
   const action = event.action;
   const notificationData = event.notification.data || {};
-  
+
   if (action === 'taken') {
     // Handle mark as taken
     event.waitUntil(
@@ -223,7 +223,7 @@ self.addEventListener('notificationclick', event => {
               return client.focus();
             }
           }
-          
+
           // Open new window if app not open
           return clients.openWindow(notificationData.url || `${BASE_PATH}/`);
         })
@@ -234,7 +234,7 @@ self.addEventListener('notificationclick', event => {
 // Background sync event (for offline actions)
 self.addEventListener('sync', event => {
   console.log('MedMindr SW: Background sync:', event.tag);
-  
+
   if (event.tag === 'medication-sync') {
     event.waitUntil(
       // Sync offline medication data when back online
@@ -246,10 +246,10 @@ self.addEventListener('sync', event => {
 async function syncOfflineData() {
   try {
     console.log('MedMindr SW: Syncing offline medication data');
-    
+
     // Get any offline actions stored in IndexedDB
     // This would integrate with your data layer
-    
+
     console.log('MedMindr SW: Offline data sync completed');
   } catch (error) {
     console.error('MedMindr SW: Error syncing offline data:', error);
@@ -259,7 +259,7 @@ async function syncOfflineData() {
 // Message event - handle messages from main app
 self.addEventListener('message', event => {
   console.log('MedMindr SW: Message received:', event.data);
-  
+
   if (event.data && event.data.type === 'SKIP_WAITING') {
     self.skipWaiting();
   }
