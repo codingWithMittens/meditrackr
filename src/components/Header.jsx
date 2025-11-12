@@ -19,40 +19,39 @@ const Header = ({
     setShowSettingsMenu(false);
   };
     return (
-    <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/50 p-4 sm:p-6 mb-6 no-print">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div className="bg-white/80 backdrop-blur-sm rounded-lg sm:rounded-2xl shadow-lg border border-white/50 p-1.5 sm:p-6 mb-2 sm:mb-6 no-print">
+      <div className="flex items-center justify-between">
         {/* Title and Logo - Clickable Home Link */}
         <button
           onClick={handleTitleClick}
-          className="flex items-center gap-3 calendar-header hover:scale-105 transition-transform duration-200 cursor-pointer"
+          className="flex items-center gap-1.5 sm:gap-2 calendar-header hover:scale-105 transition-transform duration-200 cursor-pointer min-w-0 flex-shrink"
           title="Back to Calendar"
         >
-          <div className="bg-gradient-to-br from-blue-500 to-teal-600 p-2.5 sm:p-3 rounded-2xl shadow-lg">
-            <Calendar className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
+          <div className="bg-gradient-to-br from-blue-500 to-teal-600 p-1 sm:p-3 rounded-md sm:rounded-2xl shadow-lg flex-shrink-0">
+            <Calendar className="w-3.5 h-3.5 sm:w-8 sm:h-8 text-white" />
           </div>
-          <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-gray-800 to-teal-700 bg-clip-text text-transparent">MedMindr</h1>
+          <h1 className="text-base sm:text-3xl font-bold bg-gradient-to-r from-gray-800 to-teal-700 bg-clip-text text-transparent truncate">MedMindr</h1>
         </button>
 
         {/* Navigation and Settings */}
-        <div className="flex items-center justify-end gap-3">
-
+        <div className="flex items-center justify-end gap-1 sm:gap-3 flex-shrink-0">
           {/* User Menu with Settings */}
           {user && (
             <div className="relative">
               <button
                 onClick={() => setShowSettingsMenu(!showSettingsMenu)}
-                className="flex items-center gap-2 bg-white/70 text-gray-700 px-3 py-2 rounded-xl hover:bg-white/80 hover:shadow-md border border-gray-200/50 transition-all duration-200 user-menu"
+                className="flex items-center gap-0.5 sm:gap-2 bg-white/70 text-gray-700 px-1.5 py-1 sm:px-3 sm:py-2 rounded-md sm:rounded-xl hover:bg-white/80 hover:shadow-md border border-gray-200/50 transition-all duration-200 user-menu"
                 title="Settings & Account"
               >
-                <div className="w-6 h-6 bg-gradient-to-br from-blue-500 to-teal-600 rounded-full flex items-center justify-center">
-                  <span className="text-white text-xs font-bold">
+                <div className="w-4 h-4 sm:w-6 sm:h-6 bg-gradient-to-br from-blue-500 to-teal-600 rounded-full flex items-center justify-center flex-shrink-0">
+                  <span className="text-white text-[10px] sm:text-xs font-bold">
                     {user.name.charAt(0).toUpperCase()}
                   </span>
                 </div>
-                <span className="text-sm font-medium hidden sm:inline max-w-20 truncate">
+                <span className="text-xs sm:text-sm font-medium hidden sm:inline max-w-16 truncate">
                   {user.name}
                 </span>
-                <Settings className="w-4 h-4" />
+                <Settings className="w-2.5 h-2.5 sm:w-4 sm:h-4 flex-shrink-0" />
               </button>
                           {showSettingsMenu && ReactDOM.createPortal(
                 <>
@@ -62,7 +61,7 @@ const Header = ({
                     onClick={() => setShowSettingsMenu(false)}
                   />
                   {/* Dropdown menu */}
-                  <div className="fixed top-20 right-4 sm:right-6 w-56 bg-white backdrop-blur-sm rounded-xl shadow-2xl border border-gray-200 z-[9999]">
+                  <div className="fixed top-14 sm:top-20 right-2 sm:right-6 w-52 sm:w-56 bg-white backdrop-blur-sm rounded-xl shadow-2xl border border-gray-200 z-[9999]">
                     <button
                       onClick={() => {
                         setCurrentView('list');
