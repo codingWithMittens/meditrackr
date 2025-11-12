@@ -1,4 +1,5 @@
 import demoData from '../data/demoData.json';
+import { ensureDemoDataToYesterday } from '../data/updateDemoToYesterday.js';
 
 export const createDemoUser = async () => {
   try {
@@ -84,3 +85,22 @@ export const resetDemoData = async () => {
 export const isDemoUser = (userId) => {
   return userId === 'demo_user_2024';
 };
+
+// Ensure demo data is current (has entries up to yesterday)
+export function ensureCurrentDemoData() {
+  if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
+    return { success: false, error: 'localStorage not available' };
+  }
+
+  try {
+    const updated = ensureDemoDataToYesterday();
+    return {
+      success: true,
+      updated,
+      message: updated ? 'Demo data updated to current date' : 'Demo data already current'
+    };
+  } catch (error) {
+    console.error('Error ensuring current demo data:', error);
+    return { success: false, error: error.message };
+  }
+}

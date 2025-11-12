@@ -104,6 +104,23 @@ function AuthenticatedContent({ user, logout }) {
     // Initialize PWA services
     console.log('Initializing PWA services...');
 
+    // Check if demo user has current data (up to yesterday)
+    if (user && user.id === 'demo_user_2024') {
+      console.log('Demo user detected - checking data currency...');
+      import('./services/demoService').then(({ ensureCurrentDemoData }) => {
+        const result = ensureCurrentDemoData();
+        console.log('Demo data currency check:', result);
+
+        if (result.updated) {
+          console.log('Demo data was updated - reloading medications...');
+          // The medications will be reloaded by the useMedications hook automatically
+          // due to localStorage changes
+        }
+      }).catch(error => {
+        console.error('Error checking demo data currency:', error);
+      });
+    }
+
     // Listen for notification events
     const handleNotificationClick = (event) => {
       console.log('App: Notification clicked', event.detail);
@@ -131,7 +148,7 @@ function AuthenticatedContent({ user, logout }) {
       window.removeEventListener('notification-medication-click', handleNotificationClick);
       window.removeEventListener('medication-taken-notification', handleMedicationTaken);
     };
-  }, []);
+  }, [user]);
 
   // Tour form prefill data
   const [prefillData, setPrefillData] = useState(null);
