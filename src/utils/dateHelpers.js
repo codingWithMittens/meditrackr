@@ -90,3 +90,13 @@ export const getDateRangePreset = (preset) => {
     endDate: formatDate(today)
   };
 };
+
+// Helper function to get start of week (Sunday)
+export const getWeekStart = (date) => {
+  const start = new Date(date);
+  const day = start.getDay();
+  const diff = start.getDate() - day;
+  start.setDate(diff);
+  start.setHours(0, 0, 0, 0);
+  return start;
+};

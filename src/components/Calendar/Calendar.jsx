@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar as CalendarIcon, Plus, FileText, ChevronDown, ChevronUp } from 'lucide-react';
+import { Calendar as CalendarIcon, Plus, FileText, ChevronLeft, ChevronRight, ChevronDown } from 'lucide-react';
 import { getDaysInMonth, formatDate } from '../../utils/dateHelpers';
 import { getSchedulesForDate } from '../../utils/scheduleHelpers';
 import { DAYS_OF_WEEK_SHORT } from '../../constants/medications';
@@ -21,25 +21,17 @@ const Calendar = ({ medications, timePeriods, toggleTaken, onAddNew, updateDaily
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Calendar state - weekly view with infinite scroll
+  // Calendar state - simple weekly view
   const today = new Date();
-  const [centerDate, setCenterDate] = useState(today);
-  const [loadedWeeks, setLoadedWeeks] = useState(() => {
-    // Start with current week and surrounding weeks
-    const currentWeek = getWeekStart(today);
-    const weeks = [];
-
-    // Load 3 weeks: previous, current, next
-    for (let i = -1; i <= 1; i++) {
-      const weekStart = new Date(currentWeek);
-      weekStart.setDate(currentWeek.getDate() + (i * 7));
-      weeks.push(weekStart);
-    }
-
-    return weeks;
+  const [currentWeek, setCurrentWeek] = useState(() => {
+    const week = new Date(today);
+    const day = week.getDay();
+    const diff = week.getDate() - day;
+    week.setDate(diff);
+    week.setHours(0, 0, 0, 0);
+    return week;
   });
-
-  const [isLoading, setIsLoading] = useState(false);
+  const [additionalWeeksCount, setAdditionalWeeksCount] = useState(0);
 
   const [selectedDayModal, setSelectedDayModal] = useState(null);
   const [hoveredCard, setHoveredCard] = useState(null);
@@ -58,15 +50,7 @@ const Calendar = ({ medications, timePeriods, toggleTaken, onAddNew, updateDaily
     return localStorage.getItem(sessionKey) === 'true';
   });
 
-    // Helper function to get start of week (Sunday)
-  const getWeekStart = (date) => {
-    const start = new Date(date);
-    const day = start.getDay();
-    const diff = start.getDate() - day;
-    start.setDate(diff);
-    start.setHours(0, 0, 0, 0);
-    return start;
-  };
+
 
   // Get week days from a start date
   const getWeekDays = (weekStart) => {
@@ -79,59 +63,29 @@ const Calendar = ({ medications, timePeriods, toggleTaken, onAddNew, updateDaily
     return days;
   };
 
-  // Load more weeks functionality
-  const loadPreviousWeeks = async (count = 2) => {
-    if (isLoading) return;
-
-    setIsLoading(true);
-    const firstWeek = loadedWeeks[0];
-    const newWeeks = [];
-
-    for (let i = count; i > 0; i--) {
-      const prevWeek = new Date(firstWeek);
-      prevWeek.setDate(firstWeek.getDate() - (i * 7));
-      newWeeks.push(prevWeek);
-    }
-
-    setLoadedWeeks(prev => [...newWeeks, ...prev]);
-
-    // Small delay to prevent rapid fire loading
-    setTimeout(() => setIsLoading(false), 100);
+  // Week navigation functions
+  const navigateToPreviousWeek = () => {
+    const prevWeek = new Date(currentWeek);
+    prevWeek.setDate(currentWeek.getDate() - 7);
+    setCurrentWeek(prevWeek);
+    setAdditionalWeeksCount(0);
   };
 
-  const loadNextWeeks = async (count = 2) => {
-    if (isLoading) return;
-
-    setIsLoading(true);
-    const lastWeek = loadedWeeks[loadedWeeks.length - 1];
-    const newWeeks = [];
-
-    for (let i = 1; i <= count; i++) {
-      const nextWeek = new Date(lastWeek);
-      nextWeek.setDate(lastWeek.getDate() + (i * 7));
-      newWeeks.push(nextWeek);
-    }
-
-    setLoadedWeeks(prev => [...prev, ...newWeeks]);
-
-    // Small delay to prevent rapid fire loading
-    setTimeout(() => setIsLoading(false), 100);
+  const navigateToNextWeek = () => {
+    const nextWeek = new Date(currentWeek);
+    nextWeek.setDate(currentWeek.getDate() + 7);
+    setCurrentWeek(nextWeek);
+    setAdditionalWeeksCount(0);
   };
 
-    // Infinite scroll handler
-  const handleScroll = (e) => {
-    const container = e.target;
-    const { scrollTop, scrollHeight, clientHeight } = container;
-
-    // Load previous weeks when near top (within 200px)
-    if (scrollTop < 200 && !isLoading) {
-      loadPreviousWeeks();
-    }
-
-    // Load next weeks when near bottom (within 200px)
-    if (scrollHeight - scrollTop - clientHeight < 200 && !isLoading) {
-      loadNextWeeks();
-    }
+  const navigateToThisWeek = () => {
+    const thisWeek = new Date(today);
+    const day = thisWeek.getDay();
+    const diff = thisWeek.getDate() - day;
+    thisWeek.setDate(diff);
+    thisWeek.setHours(0, 0, 0, 0);
+    setCurrentWeek(thisWeek);
+    setAdditionalWeeksCount(0);
   };
 
   const handleDayClick = (day, schedulesForDay) => {
@@ -153,33 +107,44 @@ const Calendar = ({ medications, timePeriods, toggleTaken, onAddNew, updateDaily
     toggleTaken(medId, date, time);
   };
 
-  // Get current date range for display
-  const getDateRange = () => {
-    if (loadedWeeks.length === 0) return 'Loading...';
+  // Get current week date range for display
+  const getCurrentWeekRange = () => {
+    const weekEnd = new Date(currentWeek);
+    weekEnd.setDate(currentWeek.getDate() + 6);
 
-    const firstWeek = loadedWeeks[0];
-    const lastWeek = loadedWeeks[loadedWeeks.length - 1];
-    const firstWeekEnd = new Date(firstWeek);
-    firstWeekEnd.setDate(firstWeek.getDate() + 6);
-    const lastWeekEnd = new Date(lastWeek);
-    lastWeekEnd.setDate(lastWeek.getDate() + 6);
-
-    if (loadedWeeks.length <= 3) {
-      // Show current week range
-      const currentWeekIndex = Math.floor(loadedWeeks.length / 2);
-      const currentWeek = loadedWeeks[currentWeekIndex];
-      const weekEnd = new Date(currentWeek);
-      weekEnd.setDate(currentWeek.getDate() + 6);
-
-      if (currentWeek.getMonth() === weekEnd.getMonth()) {
-        return `${currentWeek.toLocaleDateString('en-US', { month: 'long', day: 'numeric' })} - ${weekEnd.getDate()}, ${weekEnd.getFullYear()}`;
-      } else {
-        return `${currentWeek.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${weekEnd.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}, ${weekEnd.getFullYear()}`;
-      }
+    if (currentWeek.getMonth() === weekEnd.getMonth()) {
+      return `${currentWeek.toLocaleDateString('en-US', { month: 'long', day: 'numeric' })} - ${weekEnd.getDate()}, ${weekEnd.getFullYear()}`;
     } else {
-      // Show full range when many weeks loaded
-      return `${firstWeek.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${lastWeekEnd.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}, ${lastWeekEnd.getFullYear()}`;
+      return `${currentWeek.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${weekEnd.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}, ${weekEnd.getFullYear()}`;
     }
+  };
+
+  // Get additional weeks for "show more" functionality
+  const getAdditionalWeeks = () => {
+    const weeks = [];
+    // Add weeks incrementally: alternating future and past weeks
+    for (let i = 1; i <= additionalWeeksCount; i++) {
+      if (i % 2 === 1) {
+        // Add future week
+        const futureWeekOffset = Math.ceil(i / 2);
+        const futureWeek = new Date(currentWeek);
+        futureWeek.setDate(currentWeek.getDate() + (futureWeekOffset * 7));
+        weeks.push(futureWeek);
+      } else {
+        // Add past week
+        const pastWeekOffset = Math.ceil(i / 2);
+        const pastWeek = new Date(currentWeek);
+        pastWeek.setDate(currentWeek.getDate() - (pastWeekOffset * 7));
+        weeks.push(pastWeek);
+      }
+    }
+    return weeks;
+  };
+
+  // Reset additional weeks when current week changes
+  const handleWeekNavigation = (navigationFn) => {
+    navigationFn();
+    setAdditionalWeeksCount(0);
   };
 
   // Update modal when medications change
@@ -329,25 +294,52 @@ const Calendar = ({ medications, timePeriods, toggleTaken, onAddNew, updateDaily
   return (
     <>
       <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/50 p-6">
-        {/* Header */}
-        <div className="flex items-center justify-center mb-4 sm:mb-6">
-          <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4 text-center">
+        {/* Header with Navigation */}
+        <div className="flex items-center justify-between mb-4 sm:mb-6">
+          {/* Week Navigation */}
+          <button
+            onClick={navigateToPreviousWeek}
+            className={`flex items-center justify-center ${isMobile ? 'w-8 h-8' : 'w-10 h-10'} bg-white/70 text-gray-700 rounded-xl hover:bg-white hover:shadow-md border border-gray-200/50 transition-all duration-200 touch-manipulation`}
+            title="Previous Week"
+          >
+            <ChevronLeft className={`${isMobile ? 'w-4 h-4' : 'w-5 h-5'}`} />
+          </button>
+
+          <div className="flex flex-col items-center gap-2 text-center">
             <h2 className={`${isMobile ? 'text-lg' : 'text-2xl'} font-bold leading-tight`}>
-              {getDateRange()}
+              {getCurrentWeekRange()}
             </h2>
 
-            {/* Reports/Export Button */}
-            <button
-              onClick={onNavigateToReports}
-              className={`flex items-center gap-2 bg-white/70 text-gray-700 ${isMobile ? 'px-2 py-1.5' : 'px-3 py-2'} rounded-xl hover:bg-white hover:shadow-md border border-gray-200/50 transition-all duration-200 reports-btn touch-manipulation`}
-              title="Reports & Export"
-            >
-              <FileText className={`${isMobile ? 'w-3 h-3' : 'w-4 h-4'}`} />
-              <span className={`${isMobile ? 'text-xs' : 'text-sm'} font-medium ${isMobile ? '' : 'hidden sm:inline'}`}>
-                {isMobile ? 'Report' : 'Reports'}
-              </span>
-            </button>
+            {/* This Week / Reports Row */}
+            <div className="flex items-center gap-3">
+              <button
+                onClick={navigateToThisWeek}
+                className={`${isMobile ? 'text-xs px-2 py-1' : 'text-sm px-3 py-1.5'} bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors duration-200 font-medium touch-manipulation`}
+              >
+                This Week
+              </button>
+
+              {/* Reports/Export Button */}
+              <button
+                onClick={onNavigateToReports}
+                className={`flex items-center gap-2 bg-white/70 text-gray-700 ${isMobile ? 'px-2 py-1.5' : 'px-3 py-2'} rounded-xl hover:bg-white hover:shadow-md border border-gray-200/50 transition-all duration-200 reports-btn touch-manipulation`}
+                title="Reports & Export"
+              >
+                <FileText className={`${isMobile ? 'w-3 h-3' : 'w-4 h-4'}`} />
+                <span className={`${isMobile ? 'text-xs' : 'text-sm'} font-medium ${isMobile ? '' : 'hidden sm:inline'}`}>
+                  {isMobile ? 'Report' : 'Reports'}
+                </span>
+              </button>
+            </div>
           </div>
+
+          <button
+            onClick={navigateToNextWeek}
+            className={`flex items-center justify-center ${isMobile ? 'w-8 h-8' : 'w-10 h-10'} bg-white/70 text-gray-700 rounded-xl hover:bg-white hover:shadow-md border border-gray-200/50 transition-all duration-200 touch-manipulation`}
+            title="Next Week"
+          >
+            <ChevronRight className={`${isMobile ? 'w-4 h-4' : 'w-5 h-5'}`} />
+          </button>
         </div>
 
                 {/* Day Headers */}
@@ -359,75 +351,123 @@ const Calendar = ({ medications, timePeriods, toggleTaken, onAddNew, updateDaily
           ))}
         </div>
 
-        {/* Scrollable Weekly Calendar Container */}
-        <div
-          className="max-h-96 sm:max-h-[500px] overflow-y-auto space-y-6"
-          onScroll={handleScroll}
-        >
-          {isLoading && (
-            <div className="text-center py-2 text-gray-500 text-sm">
-              Loading more weeks...
+                {/* All Weeks Container with Scroll */}
+        <div className="space-y-6 max-h-96 overflow-y-auto mb-4">
+          {/* Current Week */}
+          <div className="space-y-2">
+            {/* Current Week Calendar Grid */}
+            <div className={`grid grid-cols-7 ${isMobile ? 'gap-1' : 'gap-2'} calendar-grid`}>
+              {getWeekDays(currentWeek).map((day, dayIndex) => {
+                const dateStr = formatDate(day);
+                const schedulesForDay = medications.flatMap(med =>
+                  getSchedulesForDate(med, dateStr).map(s => ({
+                    ...s,
+                    medId: med.id,
+                    medName: med.name,
+                    medDosage: med.dosage
+                  }))
+                );
+
+                return (
+                  <CalendarDay
+                    key={`current-week-${dayIndex}`}
+                    day={day}
+                    dateStr={dateStr}
+                    schedulesForDay={schedulesForDay}
+                    timePeriods={timePeriods}
+                    hoveredCard={hoveredCard}
+                    setHoveredCard={setHoveredCard}
+                    onClick={() => handleDayClick(day, schedulesForDay)}
+                    onAddNew={onAddNew}
+                    isCurrentMonth={true}
+                    getDailyLog={getDailyLog}
+                  />
+                );
+              })}
             </div>
-          )}
+          </div>
 
-          {loadedWeeks.map((weekStart, weekIndex) => {
-            const weekDays = getWeekDays(weekStart);
-            const weekEnd = new Date(weekStart);
-            weekEnd.setDate(weekStart.getDate() + 6);
+          {/* Additional Weeks */}
+          {additionalWeeksCount > 0 && (
+            <>
+              {getAdditionalWeeks().sort((a, b) => a.getTime() - b.getTime()).map((weekStart) => {
+                const weekDays = getWeekDays(weekStart);
+                const weekEnd = new Date(weekStart);
+                weekEnd.setDate(weekStart.getDate() + 6);
 
-            // Show month indicator when month changes
-            const showMonthHeader = weekIndex === 0 ||
-              (weekIndex > 0 && weekStart.getMonth() !== loadedWeeks[weekIndex - 1].getMonth());
+                return (
+                  <div key={weekStart.getTime()} className="space-y-2">
+                    {/* Week Header */}
+                    <div className="flex items-center justify-center py-2">
+                      <div className={`bg-gradient-to-r from-gray-500 to-gray-600 text-white ${isMobile ? 'px-3 py-1' : 'px-4 py-2'} rounded-full shadow-lg`}>
+                        <h3 className={`${isMobile ? 'text-xs' : 'text-sm'} font-bold`}>
+                          {weekStart.getMonth() === weekEnd.getMonth()
+                            ? `${weekStart.toLocaleDateString('en-US', { month: 'long', day: 'numeric' })} - ${weekEnd.getDate()}, ${weekEnd.getFullYear()}`
+                            : `${weekStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${weekEnd.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}, ${weekEnd.getFullYear()}`
+                          }
+                        </h3>
+                      </div>
+                    </div>
 
-            return (
-              <div key={weekStart.getTime()} className="space-y-2">
-                {/* Month Header Indicator */}
-                {showMonthHeader && (
-                  <div className="flex items-center justify-center py-2">
-                    <div className={`bg-gradient-to-r from-blue-500 to-teal-600 text-white ${isMobile ? 'px-3 py-1' : 'px-4 py-2'} rounded-full shadow-lg`}>
-                      <h3 className={`${isMobile ? 'text-xs' : 'text-sm'} font-bold`}>
-                        {weekStart.toLocaleDateString('en-US', {
-                          month: 'long',
-                          year: 'numeric'
-                        })}
-                      </h3>
+                    {/* Week Calendar Grid */}
+                    <div className={`grid grid-cols-7 ${isMobile ? 'gap-1' : 'gap-2'} calendar-grid`}>
+                      {weekDays.map((day, dayIndex) => {
+                        const dateStr = formatDate(day);
+                        const schedulesForDay = medications.flatMap(med =>
+                          getSchedulesForDate(med, dateStr).map(s => ({
+                            ...s,
+                            medId: med.id,
+                            medName: med.name,
+                            medDosage: med.dosage
+                          }))
+                        );
+
+                        return (
+                          <CalendarDay
+                            key={`${weekStart.getTime()}-${dayIndex}`}
+                            day={day}
+                            dateStr={dateStr}
+                            schedulesForDay={schedulesForDay}
+                            timePeriods={timePeriods}
+                            hoveredCard={hoveredCard}
+                            setHoveredCard={setHoveredCard}
+                            onClick={() => handleDayClick(day, schedulesForDay)}
+                            onAddNew={onAddNew}
+                            isCurrentMonth={true}
+                            getDailyLog={getDailyLog}
+                          />
+                        );
+                      })}
                     </div>
                   </div>
-                )}
+                );
+              })}
+            </>
+          )}
+        </div>
 
-                {/* Weekly Calendar Grid */}
-                <div className={`grid grid-cols-7 ${isMobile ? 'gap-1' : 'gap-2'} calendar-grid`}>
-                  {weekDays.map((day, dayIndex) => {
-                    const dateStr = formatDate(day);
-                    const schedulesForDay = medications.flatMap(med =>
-                      getSchedulesForDate(med, dateStr).map(s => ({
-                        ...s,
-                        medId: med.id,
-                        medName: med.name,
-                        medDosage: med.dosage
-                      }))
-                    );
-
-                    return (
-                      <CalendarDay
-                        key={`${weekStart.getTime()}-${dayIndex}`}
-                        day={day}
-                        dateStr={dateStr}
-                        schedulesForDay={schedulesForDay}
-                        timePeriods={timePeriods}
-                        hoveredCard={hoveredCard}
-                        setHoveredCard={setHoveredCard}
-                        onClick={() => handleDayClick(day, schedulesForDay)}
-                        onAddNew={onAddNew}
-                        isCurrentMonth={true} // Always true for weekly view
-                        getDailyLog={getDailyLog}
-                      />
-                    );
-                  })}
-                </div>
-              </div>
-            );
-          })}
+        {/* Show More / Show Less Button - Always at bottom */}
+        <div className={`flex justify-center ${additionalWeeksCount > 0 ? 'mt-6' : ''}`}>
+          {additionalWeeksCount > 0 && (
+            <button
+              onClick={() => setAdditionalWeeksCount(0)}
+              className={`flex items-center gap-2 bg-gradient-to-r from-gray-500 to-gray-600 text-white ${isMobile ? 'px-4 py-2 mr-2' : 'px-6 py-3 mr-3'} rounded-xl hover:from-gray-600 hover:to-gray-700 transition-all duration-200 font-medium shadow-lg touch-manipulation`}
+            >
+              <span className={`${isMobile ? 'text-sm' : 'text-base'}`}>
+                Show Less
+              </span>
+              <ChevronDown className={`${isMobile ? 'w-4 h-4' : 'w-5 h-5'} transition-transform duration-200 rotate-180`} />
+            </button>
+          )}
+          <button
+            onClick={() => setAdditionalWeeksCount(prev => prev + 1)}
+            className={`flex items-center gap-2 bg-gradient-to-r from-blue-500 to-teal-600 text-white ${isMobile ? 'px-4 py-2' : 'px-6 py-3'} rounded-xl hover:from-blue-600 hover:to-teal-700 transition-all duration-200 font-medium shadow-lg touch-manipulation`}
+          >
+            <span className={`${isMobile ? 'text-sm' : 'text-base'}`}>
+              Show More
+            </span>
+            <ChevronDown className={`${isMobile ? 'w-4 h-4' : 'w-5 h-5'}`} />
+          </button>
         </div>
       </div>
 
